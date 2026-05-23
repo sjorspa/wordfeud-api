@@ -22,7 +22,7 @@ public class GameJoinTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        var joinRequest = new { Name = "Player2" };
+        var joinRequest = new { PlayerName = "Player2" };
 
         // Act
         var response = await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", joinRequest);
@@ -39,7 +39,7 @@ public class GameJoinTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostJoinGame_ShouldReturn404WhenGameNotFound()
     {
         // Arrange
-        var joinRequest = new { Name = "Player2" };
+        var joinRequest = new { PlayerName = "Player2" };
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/join", joinRequest);
@@ -56,10 +56,10 @@ public class GameJoinTests : IClassFixture<WebApplicationFactory<Program>>
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
 
         // Join once
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { Name = "Player2" });
+        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
 
         // Try to join again
-        var thirdJoinRequest = new { Name = "Player3" };
+        var thirdJoinRequest = new { PlayerName = "Player3" };
 
         // Act
         var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/join", thirdJoinRequest);

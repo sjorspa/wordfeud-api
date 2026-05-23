@@ -7,7 +7,7 @@ namespace Wordfeud.Api.Tests;
 
 /// <summary>
 /// Custom WebApplicationFactory that configures JSON serialization
-/// with the TileArrayConverter for 2D board deserialization in tests.
+/// with the BoardConverter for board deserialization in tests.
 /// </summary>
 public class TestWebApplicationFactory : WebApplicationFactory<Program>
 {
@@ -15,10 +15,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
-            // Add JSON options with TileArrayConverter to the MVC configuration
+            // Add JSON options with BoardConverter to the MVC configuration
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new TileArrayConverter());
+                options.JsonSerializerOptions.Converters.Add(new BoardConverter());
             });
         });
     }

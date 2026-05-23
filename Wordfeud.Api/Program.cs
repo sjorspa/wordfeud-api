@@ -11,11 +11,11 @@ public sealed class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container
-        // Configure JSON serialization with custom Tile[,] converter
+        // Configure JSON serialization with BoardConverter
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
-                options.JsonSerializerOptions.Converters.Add(new TileArrayConverter());
+                options.JsonSerializerOptions.Converters.Add(new BoardConverter());
             });
 
         builder.Services.AddEndpointsApiExplorer();
@@ -72,7 +72,10 @@ public sealed class Program
             });
         }
 
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
         app.UseAuthorization();
         app.MapControllers();
 

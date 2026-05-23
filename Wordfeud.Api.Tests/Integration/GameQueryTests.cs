@@ -20,8 +20,11 @@ public class GameQueryTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetGame_ShouldReturnGame()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
+        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
+
+        // Debug: print IDs
+        Console.WriteLine($"Created game ID: {game?.Id}");
 
         // Act
         var response = await _client.GetAsync($"/api/games/{game!.Id}");

@@ -123,7 +123,7 @@ public class DutchDictionaryService : IDutchDictionaryService
             var url = "https://open_ta.al/api/v1/dutch/text/overall/10000.txt";
 
             using var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromMinutes(2);
+            httpClient.Timeout = TimeSpan.FromSeconds(5);
 
             var content = await httpClient.GetStringAsync(url);
             var words = content

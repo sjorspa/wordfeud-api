@@ -54,9 +54,9 @@ public class Game
     public List<Tile> TileBag { get; set; } = new();
 
     /// <summary>
-    /// The board state — 15x15 grid of placed tiles (null = empty).
+    /// The board state.
     /// </summary>
-    public Tile?[,] Board { get; set; } = new Tile?[15, 15];
+    public Board Board { get; set; } = new Board();
 
     /// <summary>
     /// The list of all words formed in the game (for validation history).

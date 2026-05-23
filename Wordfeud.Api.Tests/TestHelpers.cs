@@ -7,17 +7,17 @@ namespace Wordfeud.Api.Tests;
 
 /// <summary>
 /// Helper methods for integration tests that need to deserialize Game objects
-/// with the TileArrayConverter for 2D board serialization.
+/// with the BoardConverter for board deserialization.
 /// </summary>
 public static class TestHelpers
 {
     private static readonly JsonSerializerOptions Options = new()
     {
-        Converters = { new TileArrayConverter() }
+        Converters = { new BoardConverter() }
     };
 
     /// <summary>
-    /// Deserializes HTTP response content as a Game object with the TileArrayConverter.
+    /// Deserializes HTTP response content as a Game object with the BoardConverter.
     /// </summary>
     public static async Task<Game> ReadAsGameAsync(HttpResponseMessage response)
     {
@@ -27,7 +27,7 @@ public static class TestHelpers
     }
 
     /// <summary>
-    /// Deserializes HTTP response content as a Game object with the TileArrayConverter.
+    /// Deserializes HTTP response content as a Game object with the BoardConverter.
     /// </summary>
     public static async Task<Game> ReadAsGameAsync(HttpContent content)
     {
