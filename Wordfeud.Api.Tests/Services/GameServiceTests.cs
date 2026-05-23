@@ -396,9 +396,19 @@ public class GameServiceTests
         await _service.JoinGameAsync(game.Id, "Player2");
         var result = await _service.GetGameAsync(game.Id);
         var playerId = result!.CurrentPlayerId!;
-        var hand = result.Players.First(p => p.Id == playerId).Hand;
+        var player = result.Players.First(p => p.Id == playerId);
 
-        var blankTile = hand.First(t => t.IsBlank);
+        // Create a blank tile and add it to the player's hand to guarantee we have one
+        var blankTile = new Tile
+        {
+            Letter = string.Empty,
+            Points = 0,
+            IsBlank = true,
+            BlankRepresentation = null,
+            Id = Guid.NewGuid().ToString()
+        };
+        player.Hand.Add(blankTile);
+
         var request = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>

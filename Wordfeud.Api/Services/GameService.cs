@@ -637,49 +637,62 @@ public class GameService : IGameService
         var formedWordNames = new List<string>();
         var formedWords = GetFormedWords(game, request);
 
-        foreach (var (word, isCrossWord) in formedWords)
+        if (formedWords.Any())
         {
-            if (isCrossWord)
+            foreach (var (word, isCrossWord) in formedWords)
             {
-                // For cross words, we need to recalculate with their positions
-                var wordScore = CalculateWordScoreForPlacement(game, word, request);
-                totalScore += wordScore;
-                formedWordNames.Add(word);
+                if (isCrossWord)
+                {
+                    // For cross words, we need to recalculate with their positions
+                    var wordScore = CalculateWordScoreForPlacement(game, word, request);
+                    totalScore += wordScore;
+                    formedWordNames.Add(word);
+                }
+                else
+                {
+                    // Main word scoring
+                    var wordScore = 0;
+                    var letterScores = new List<int>();
+
+                    foreach (var tileDto in request.Tiles)
+                    {
+                        var tile = game.Board[tileDto.Row, tileDto.Column];
+                        var letterPoints = tile?.Points ?? 0;
+
+                        // Apply letter bonuses
+                        var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
+                        if (bonus == BonusType.DoubleLetter)
+                            letterPoints *= 2;
+                        else if (bonus == BonusType.TripleLetter)
+                            letterPoints *= 3;
+
+                        letterScores.Add(letterPoints);
+                    }
+
+                    var wordMultiplier = 1;
+                    foreach (var tileDto in request.Tiles)
+                    {
+                        var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
+                        if (bonus == BonusType.DoubleWord)
+                            wordMultiplier *= 2;
+                        else if (bonus == BonusType.TripleWord)
+                            wordMultiplier *= 3;
+                    }
+
+                    wordScore = letterScores.Sum() * wordMultiplier;
+                    totalScore += wordScore;
+                    formedWordNames.Add(word);
+                }
             }
-            else
+        }
+        else
+        {
+            // No words formed (single tile or tiles not forming valid words yet)
+            // Score the tiles at their base value (no word multipliers)
+            foreach (var tileDto in request.Tiles)
             {
-                // Main word scoring
-                var wordScore = 0;
-                var letterScores = new List<int>();
-
-                foreach (var tileDto in request.Tiles)
-                {
-                    var tile = game.Board[tileDto.Row, tileDto.Column];
-                    var letterPoints = tile?.Points ?? 0;
-
-                    // Apply letter bonuses
-                    var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
-                    if (bonus == BonusType.DoubleLetter)
-                        letterPoints *= 2;
-                    else if (bonus == BonusType.TripleLetter)
-                        letterPoints *= 3;
-
-                    letterScores.Add(letterPoints);
-                }
-
-                var wordMultiplier = 1;
-                foreach (var tileDto in request.Tiles)
-                {
-                    var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
-                    if (bonus == BonusType.DoubleWord)
-                        wordMultiplier *= 2;
-                    else if (bonus == BonusType.TripleWord)
-                        wordMultiplier *= 3;
-                }
-
-                wordScore = letterScores.Sum() * wordMultiplier;
-                totalScore += wordScore;
-                formedWordNames.Add(word);
+                var tile = game.Board[tileDto.Row, tileDto.Column];
+                totalScore += tile?.Points ?? 0;
             }
         }
 
