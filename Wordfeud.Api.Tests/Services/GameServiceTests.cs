@@ -116,6 +116,7 @@ public class GameServiceTests
     {
         // Arrange
         var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
 
         // Act & Assert
         var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.JoinGameAsync(game.Id, "Player3"));
