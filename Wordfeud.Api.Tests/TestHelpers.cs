@@ -13,7 +13,8 @@ public static class TestHelpers
 {
     private static readonly JsonSerializerOptions Options = new()
     {
-        Converters = { new BoardConverter() }
+        Converters = { new BoardConverter() },
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
     /// <summary>

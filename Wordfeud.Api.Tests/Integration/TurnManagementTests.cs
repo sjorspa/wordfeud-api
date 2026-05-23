@@ -20,16 +20,14 @@ public class TurnManagementTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostPassTurn_ShouldReturn200WithNextPlayer()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
+        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { Name = "Player2" });
+        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
         var gameState = await _client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
-        var passRequest = new { PlayerId = currentGame!.CurrentPlayerId };
-
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", passRequest);
+        var response = await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentGame!.CurrentPlayerId}", null);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -41,10 +39,8 @@ public class TurnManagementTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostPassTurn_ShouldReturn404WhenGameNotFound()
     {
         // Arrange
-        var passRequest = new { PlayerId = "player-id" };
-
         // Act
-        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/pass", passRequest);
+        var response = await _client.PostAsync("/api/games/nonexistent-id/pass?playerId=player-id", null);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);

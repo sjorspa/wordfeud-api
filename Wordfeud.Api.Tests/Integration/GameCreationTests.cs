@@ -25,10 +25,13 @@ public class GameCreationTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/games", request);
+        var rawJson = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"RAW JSON: {rawJson}");
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
         var game = await TestHelpers.ReadAsGameAsync(response);
+        Console.WriteLine($"Game Players count: {game?.Players?.Count ?? 0}");
         game.Should().NotBeNull();
         game!.Players[0].Name.Should().Be("TestPlayer");
         game.Players.Should().HaveCount(1);
@@ -61,7 +64,7 @@ public class GameCreationTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostCreateGame_ShouldReturn400WhenNameMissing()
     {
         // Arrange
-        var request = new { Name = "" };
+        var request = new { PlayerName = "" };
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/games", request);

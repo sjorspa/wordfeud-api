@@ -3,6 +3,7 @@ using Wordfeud.Api.Services;
 using Wordfeud.Api.Models;
 using Wordfeud.Api.Serialization;
 using Microsoft.OpenApi.Models;
+using System.Text.Json;
 
 public sealed class Program
 {
@@ -11,10 +12,11 @@ public sealed class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container
-        // Configure JSON serialization with BoardConverter
+        // Configure JSON serialization with BoardConverter and camelCase naming policy
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 options.JsonSerializerOptions.Converters.Add(new BoardConverter());
             });
 

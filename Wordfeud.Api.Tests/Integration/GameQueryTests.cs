@@ -51,7 +51,7 @@ public class GameQueryTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetScores_ShouldReturn200WithScores()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
+        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
 
         // Act
@@ -78,7 +78,7 @@ public class GameQueryTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetBoard_ShouldReturn200WithBoard()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
+        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
 
         // Act

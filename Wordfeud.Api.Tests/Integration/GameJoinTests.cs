@@ -20,7 +20,7 @@ public class GameJoinTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostJoinGame_ShouldReturn200WithSecondPlayer()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
+        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
         var joinRequest = new { PlayerName = "Player2" };
 
@@ -52,7 +52,7 @@ public class GameJoinTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task PostJoinGame_ShouldReturn400WhenGameFull()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { Name = "Player1" });
+        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
 
         // Join once

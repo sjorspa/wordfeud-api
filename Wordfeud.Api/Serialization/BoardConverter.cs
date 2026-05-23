@@ -12,12 +12,6 @@ public sealed class BoardConverter : JsonConverter<Board>
     /// <inheritdoc />
     public override Board Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        // Skip the property name token ("board") that the JsonSerializer leaves us at
-        if (reader.TokenType == JsonTokenType.PropertyName)
-        {
-            reader.Read();
-        }
-
         if (reader.TokenType == JsonTokenType.Null)
         {
             reader.Read();
@@ -26,47 +20,30 @@ public sealed class BoardConverter : JsonConverter<Board>
 
         if (reader.TokenType != JsonTokenType.StartArray)
         {
-            throw new JsonException($"Expected StartArray but got {reader.TokenType}.");
+            throw new JsonException($"Expected StartArray but got {reader.TokenType}");
         }
 
-        // Manually read the 2D array to avoid issues with nested converters
-        var rows = new List<List<Tile?>>(15);
-        while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-        {
-            if (reader.TokenType == JsonTokenType.StartArray)
-            {
-                var row = new List<Tile?>(15);
-                while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-                {
-                    if (reader.TokenType == JsonTokenType.Null)
-                    {
-                        row.Add(null);
-                    }
-                    else if (reader.TokenType == JsonTokenType.StartObject)
-                    {
-                        var tile = JsonSerializer.Deserialize<Tile>(ref reader, options);
-                        row.Add(tile);
-                    }
-                    else
-                    {
-                        row.Add(null);
-                    }
-                }
-                rows.Add(row);
-            }
-        }
-
-        if (rows == null || rows.Count == 0)
+        // Deserialize the 2D array into List<List<Tile?>> using the built-in
+        // collection support, then populate the Board from the resulting data.
+        // JsonSerializer.Deserialize properly advances the reader to the token
+        // after the consumed value (EndArray), so we must NOT call reader.Read()
+        // again after it returns.
+        var rows = JsonSerializer.Deserialize<List<List<Tile?>>>(ref reader, options);
+        if (rows == null)
         {
             return new Board();
         }
 
         var board = new Board();
-        for (int row = 0; row < 15; row++)
+        for (int row = 0; row < rows.Count && row < 15; row++)
         {
-            for (int col = 0; col < 15; col++)
+            var rowTiles = rows[row];
+            for (int col = 0; col < rowTiles.Count && col < 15; col++)
             {
-                board.SetTile(row, col, rows[row]?[col]);
+                if (rowTiles[col] != null && board.IsValidPosition(row, col))
+                {
+                    board.SetTile(row, col, rowTiles[col]);
+                }
             }
         }
 
