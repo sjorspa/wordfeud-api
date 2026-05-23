@@ -331,7 +331,12 @@ public class GameServiceTests
         };
         await _service.PlaceTilesAsync(game.Id, playerId, firstRequest);
 
-        // Try to place at same position
+        // After first placement, turn passes to the other player
+        var updatedGame = await _service.GetGameAsync(game.Id);
+        var currentPlayerId = updatedGame.CurrentPlayerId!;
+        var currentHand = updatedGame.Players.First(p => p.Id == currentPlayerId).Hand;
+
+        // Try to place at same position (now with the player who has the turn)
         var secondRequest = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>
@@ -340,7 +345,7 @@ public class GameServiceTests
                 {
                     Letter = "A",
                     IsBlank = false,
-                    TileId = hand[1].Id,
+                    TileId = currentHand[0].Id,
                     Row = 7,
                     Column = 7
                 }
@@ -351,7 +356,7 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, secondRequest));
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PlaceTilesAsync(game.Id, currentPlayerId, secondRequest));
         ex.Message.ShouldContain("occupied");
     }
 
