@@ -807,7 +807,9 @@ public class GameServiceTests
     [Fact]
     public async Task PlaceTilesAsync_ShouldAddScoreToPlayer()
     {
-        // Arrange
+        // Arrange: Reset mock to ensure default behavior (accept all words)
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+        
         var game = await _service.CreateGameAsync("Player1");
         await _service.JoinGameAsync(game.Id, "Player2");
         var result = await _service.GetGameAsync(game.Id);
