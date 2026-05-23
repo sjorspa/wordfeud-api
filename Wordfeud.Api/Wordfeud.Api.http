@@ -1,0 +1,6 @@
+@Wordfeud.Api_HostAddress = http://localhost:5068
+
+GET {{Wordfeud.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

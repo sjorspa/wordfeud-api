@@ -1,0 +1,90 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]uild/
+build/
+[var]/
+[Oo]utput/
+[oO]utput/
+
+## Visual Studio cache/options directory
+.vs/
+.vscode/
+
+## ASP.NET Scaffolding
+Scaffolding/
+
+## VS Code
+.vscode/settings.json
+.vscode/launch.json
+
+## IDE
+.idea/
+*.swp
+*.swo
+*~
+
+## macOS
+.DS_Store
+
+## Node (if needed)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+## Test results
+TestResults/
+coverage*
+*.coveragexml
+*.coverage
+
+## Logs
+logs/
+*.log
+
+## Temporary files
+*.tmp
+*.temp
+*.cache
+
+## Embedded resources
+*.resources
+
+## Launch settings
+Properties/launchSettings.json
+
+## NuGet
+nuget.config
+nuget.settings
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## EF migrations
+*.efcore
+
+## Docker
+.dockerignore
+
+## Environment files
+.env
+.env.*
+!.env.example
