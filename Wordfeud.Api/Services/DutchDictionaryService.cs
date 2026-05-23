@@ -120,7 +120,7 @@ public class DutchDictionaryService : IDutchDictionaryService
         try
         {
             // OpenTaal provides Dutch word lists
-            var url = "https://open_ta.al/api/v1/dutch/text/overall/10000.txt";
+            var url = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/wordlist.txt";
 
             using var httpClient = new HttpClient();
             httpClient.Timeout = TimeSpan.FromSeconds(5);
