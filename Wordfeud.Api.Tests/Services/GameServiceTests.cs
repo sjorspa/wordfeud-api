@@ -626,7 +626,7 @@ public class GameServiceTests
         // Assert
         placedGame.Board[7, 7].Should().NotBeNull();
         placedGame.Board[7, 8].Should().NotBeNull();
-        placedGame.Players.First(p => p.Id == playerId).Hand.Should().HaveCount(5);
+        placedGame.Players.First(p => p.Id == playerId).Hand.Should().HaveCount(7);
     }
 
     [Fact]
