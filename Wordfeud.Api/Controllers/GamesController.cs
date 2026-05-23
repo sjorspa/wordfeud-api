@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Wordfeud.Api.Interfaces;
 using Wordfeud.Api.Models;
-using Wordfeud.Api.Validators;
-using FluentValidation;
 
 namespace Wordfeud.Api.Controllers;
 
@@ -14,10 +12,6 @@ namespace Wordfeud.Api.Controllers;
 public class GamesController : ControllerBase
 {
     private readonly IGameService _gameService;
-    private readonly IValidator<CreateGameRequest> _createValidator;
-    private readonly IValidator<JoinGameRequest> _joinValidator;
-    private readonly IValidator<PlaceTilesRequest> _placeValidator;
-    private readonly IValidator<SwapTilesRequest> _swapValidator;
     private readonly ILogger<GamesController> _logger;
 
     /// <summary>
@@ -25,17 +19,9 @@ public class GamesController : ControllerBase
     /// </summary>
     public GamesController(
         IGameService gameService,
-        IValidator<CreateGameRequest> createValidator,
-        IValidator<JoinGameRequest> joinValidator,
-        IValidator<PlaceTilesRequest> placeValidator,
-        IValidator<SwapTilesRequest> swapValidator,
         ILogger<GamesController> logger)
     {
         _gameService = gameService;
-        _createValidator = createValidator;
-        _joinValidator = joinValidator;
-        _placeValidator = placeValidator;
-        _swapValidator = swapValidator;
         _logger = logger;
     }
 
@@ -51,14 +37,13 @@ public class GamesController : ControllerBase
     {
         _logger.LogInformation("Creating new game with player '{PlayerName}'", request.PlayerName);
 
-        var validationResult = await _createValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Validation Error",
                 Detail = "One or more validation failures occurred.",
-                Extensions = { ["errors"] = validationResult.ToDictionary() }
+                Extensions = { ["errors"] = GetValidationErrors() }
             });
         }
 
@@ -93,14 +78,13 @@ public class GamesController : ControllerBase
     {
         _logger.LogInformation("Player '{PlayerName}' joining game {GameId}", request.PlayerName, id);
 
-        var validationResult = await _joinValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Validation Error",
                 Detail = "One or more validation failures occurred.",
-                Extensions = { ["errors"] = validationResult.ToDictionary() }
+                Extensions = { ["errors"] = GetValidationErrors() }
             });
         }
 
@@ -172,14 +156,13 @@ public class GamesController : ControllerBase
     {
         _logger.LogInformation("Player {PlayerId} placing tiles in game {GameId}", playerId, id);
 
-        var validationResult = await _placeValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Validation Error",
                 Detail = "One or more validation failures occurred.",
-                Extensions = { ["errors"] = validationResult.ToDictionary() }
+                Extensions = { ["errors"] = GetValidationErrors() }
             });
         }
 
@@ -341,14 +324,13 @@ public class GamesController : ControllerBase
     {
         _logger.LogInformation("Player {PlayerId} swapping tiles in game {GameId}", playerId, id);
 
-        var validationResult = await _swapValidator.ValidateAsync(request);
-        if (!validationResult.IsValid)
+        if (!ModelState.IsValid)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Validation Error",
                 Detail = "One or more validation failures occurred.",
-                Extensions = { ["errors"] = validationResult.ToDictionary() }
+                Extensions = { ["errors"] = GetValidationErrors() }
             });
         }
 
@@ -390,5 +372,17 @@ public class GamesController : ControllerBase
                 Detail = ex.Message
             });
         }
+    }
+
+    /// <summary>
+    /// Extracts validation errors from ModelState.
+    /// </summary>
+    private Dictionary<string, string[]> GetValidationErrors()
+    {
+        return ModelState
+            .Where(x => x.Value?.Errors.Count > 0)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
     }
 }

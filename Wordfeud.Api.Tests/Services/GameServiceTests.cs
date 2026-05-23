@@ -4,6 +4,8 @@ using Wordfeud.Api.Models;
 using Wordfeud.Api.Services;
 using Microsoft.Extensions.Logging;
 using Moq;
+using FluentAssertions;
+using Shouldly;
 
 namespace Wordfeud.Api.Tests.Services;
 
@@ -76,8 +78,8 @@ public class GameServiceTests
         var game = await _service.CreateGameAsync("Player1");
 
         // Assert
-        game.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10).
-        game.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10).
+        game.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
+        game.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(10));
     }
 
     #endregion
@@ -106,7 +108,7 @@ public class GameServiceTests
     public async Task JoinGameAsync_ShouldThrowWhenGameNotFound()
     {
         // Act & Assert
-        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.JoinGameAsync("nonexistent-id", "Player2").
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.JoinGameAsync("nonexistent-id", "Player2"));
     }
 
     [Fact]
@@ -116,8 +118,8 @@ public class GameServiceTests
         var game = await _service.CreateGameAsync("Player1");
 
         // Act & Assert
-        await _service.JoinGameAsync(game.Id, "Player2");
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.JoinGameAsync(game.Id, "Player3").WithMessage("*already started*");
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.JoinGameAsync(game.Id, "Player3"));
+        ex.Message.ShouldContain("already started");
     }
 
     [Fact]
@@ -128,7 +130,8 @@ public class GameServiceTests
         await _service.JoinGameAsync(game.Id, "Player2");
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.JoinGameAsync(game.Id, "Player3").WithMessage("*full*");
+        var ex2 = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.JoinGameAsync(game.Id, "Player3"));
+        ex2.Message.ShouldContain("full");
     }
 
     [Fact]
@@ -229,7 +232,7 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.PlaceTilesAsync("nonexistent", "player-id", request).
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.PlaceTilesAsync("nonexistent", "player-id", request));
     }
 
     [Fact]
@@ -251,7 +254,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request).WithMessage("*finished*");
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("finished");
     }
 
     [Fact]
@@ -272,7 +276,7 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.PlaceTilesAsync(game.Id, opponentId, request).
+        await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.PlaceTilesAsync(game.Id, opponentId, request));
     }
 
     [Fact]
@@ -293,7 +297,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request).WithMessage("*at least one tile*");
+        var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("at least one tile");
     }
 
     [Fact]
@@ -346,7 +351,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, secondRequest).WithMessage("*occupied*");
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, secondRequest));
+        ex.Message.ShouldContain("occupied");
     }
 
     [Fact]
@@ -378,7 +384,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request).WithMessage("*not in your hand*");
+        var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("not in your hand");
     }
 
     [Fact]
@@ -411,7 +418,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request).WithMessage("*Blank tile must have a letter*");
+        var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("Blank tile must have a letter");
     }
 
     [Fact]
@@ -443,7 +451,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request).WithMessage("*center square*");
+        var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("center square");
     }
 
     [Fact]
@@ -509,7 +518,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, nextPlayerId, secondRequest).WithMessage("*connect*");
+        var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, nextPlayerId, secondRequest));
+        ex.Message.ShouldContain("connect");
     }
 
     [Fact]
@@ -560,7 +570,8 @@ public class GameServiceTests
         };
 
         // Act & Assert
-        await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request).WithMessage("*not a valid Dutch word*");
+        var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("not a valid Dutch word");
     }
 
     [Fact]
@@ -912,7 +923,7 @@ public class GameServiceTests
     public async Task PassTurnAsync_ShouldThrowWhenGameNotFound()
     {
         // Act & Assert
-        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.PassTurnAsync("nonexistent", "player-id").
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.PassTurnAsync("nonexistent", "player-id"));
     }
 
     [Fact]
@@ -924,7 +935,8 @@ public class GameServiceTests
         var playerId = game.Players[0].Id;
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PassTurnAsync(game.Id, playerId).WithMessage("*finished*");
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.PassTurnAsync(game.Id, playerId));
+        ex.Message.ShouldContain("finished");
     }
 
     [Fact]
@@ -937,7 +949,7 @@ public class GameServiceTests
         var wrongPlayerId = result!.Players.First(p => p.Id != result.CurrentPlayerId).Id;
 
         // Act & Assert
-        await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.PassTurnAsync(game.Id, wrongPlayerId).
+        await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.PassTurnAsync(game.Id, wrongPlayerId));
     }
 
     #endregion
@@ -976,7 +988,7 @@ public class GameServiceTests
         var request = new SwapTilesRequest { TileIds = new List<string> { "tile-id" } };
 
         // Act & Assert
-        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.SwapTilesAsync("nonexistent", "player-id", request).
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.SwapTilesAsync("nonexistent", "player-id", request));
     }
 
     [Fact]
@@ -989,7 +1001,8 @@ public class GameServiceTests
         var request = new SwapTilesRequest { TileIds = new List<string> { "tile-id" } };
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, request).WithMessage("*finished*");
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("finished");
     }
 
     [Fact]
@@ -1003,7 +1016,7 @@ public class GameServiceTests
         var request = new SwapTilesRequest { TileIds = new List<string> { "tile-id" } };
 
         // Act & Assert
-        await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.SwapTilesAsync(game.Id, wrongPlayerId, request).
+        await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.SwapTilesAsync(game.Id, wrongPlayerId, request));
     }
 
     [Fact]
@@ -1021,7 +1034,8 @@ public class GameServiceTests
         var request = new SwapTilesRequest { TileIds = tileIds };
 
         // Act & Assert
-        await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, request).WithMessage("*Not enough tiles*");
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, request));
+        ex.Message.ShouldContain("Not enough tiles");
     }
 
     [Fact]
@@ -1091,7 +1105,7 @@ public class GameServiceTests
     public async Task GetScoresAsync_ShouldThrowWhenGameNotFound()
     {
         // Act & Assert
-        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.GetScoresAsync("nonexistent").
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.GetScoresAsync("nonexistent"));
     }
 
     [Fact]
@@ -1137,7 +1151,7 @@ public class GameServiceTests
     public async Task GetBoardAsync_ShouldThrowWhenGameNotFound()
     {
         // Act & Assert
-        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.GetBoardAsync("nonexistent").
+        await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.GetBoardAsync("nonexistent"));
     }
 
     [Fact]

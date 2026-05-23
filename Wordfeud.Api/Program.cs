@@ -1,9 +1,6 @@
 using Wordfeud.Api.Interfaces;
 using Wordfeud.Api.Services;
-using Wordfeud.Api.Validators;
 using Wordfeud.Api.Models;
-using FluentValidation;
-using FluentValidation.AspNetCore;
 using Microsoft.OpenApi.Models;
 
 public sealed class Program
@@ -13,8 +10,7 @@ public sealed class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container
-        builder.Services.AddControllers()
-            .AddFluentValidation(fv => fv.RegisterValidatorsFromAssemblyContaining<CreateGameRequest>());
+        builder.Services.AddControllers();
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
@@ -38,12 +34,6 @@ public sealed class Program
 
         // Register game service
         builder.Services.AddSingleton<IGameService, GameService>();
-
-        // Register validators
-        builder.Services.AddSingleton<IValidator<CreateGameRequest>, CreateGameRequestValidator>();
-        builder.Services.AddSingleton<IValidator<JoinGameRequest>, JoinGameRequestValidator>();
-        builder.Services.AddSingleton<IValidator<PlaceTilesRequest>, PlaceTilesRequestValidator>();
-        builder.Services.AddSingleton<IValidator<SwapTilesRequest>, SwapTilesRequestValidator>();
 
         // Configure logging
         builder.Services.AddLogging(loggingBuilder =>
