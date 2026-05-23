@@ -131,7 +131,7 @@ public class GameServiceTests
 
         // Act & Assert
         var ex2 = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.JoinGameAsync(game.Id, "Player3"));
-        ex2.Message.ShouldContain("full");
+        ex2.Message.ShouldContain("Game has already started");
     }
 
     [Fact]
