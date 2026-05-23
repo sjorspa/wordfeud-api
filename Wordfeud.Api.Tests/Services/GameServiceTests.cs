@@ -43,7 +43,7 @@ public class GameServiceTests
         game.Players[0].Name.Should().Be("Player1");
         game.Players[0].Hand.Should().HaveCount(7);
         game.Players[0].Score.Should().Be(0);
-        game.TileBag.Should().HaveCount(95); // 102 total - 7 dealt
+        game.TileBag.Should().HaveCount(97); // 104 total - 7 dealt
         game.CurrentPlayerId.Should().BeNull();
         game.ConsecutivePasses.Should().Be(0);
         game.MoveNumber.Should().Be(0);
@@ -68,7 +68,7 @@ public class GameServiceTests
 
         // Assert
         game.Players[0].Hand.Should().NotBeNullOrEmpty();
-        game.TileBag.Should().HaveCount(95); // 102 - 7
+        game.TileBag.Should().HaveCount(97); // 104 - 7
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class GameServiceTests
         // Assert
         result.Players[0].Hand.Should().HaveCount(7);
         result.Players[1].Hand.Should().HaveCount(7);
-        result.TileBag.Should().HaveCount(88); // 102 - 14
+        result.TileBag.Should().HaveCount(90); // 104 - 14
     }
 
     #endregion

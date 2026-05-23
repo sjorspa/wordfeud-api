@@ -10,6 +10,38 @@ public class DutchDictionaryService : IDutchDictionaryService
     private readonly HashSet<string> _words = new(StringComparer.OrdinalIgnoreCase);
     private readonly ILogger<DutchDictionaryService> _logger;
     private bool _isInitialized;
+    private static readonly HashSet<string> _fallbackWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "HUIS", "LIEFDE", "AAN", "ONDERWIJS", "WATER", "LAMP", "BOEK", "TAFEL",
+        "STOEL", "DEUR", "RAAM", "SCHOOL", "VRIEND", "KIND", "GROOT", "KLEIN",
+        "DAG", "NACHT", "MOOI", "LEUK", "GOED", "BEST", "SNEL", "LANGZAAM",
+        "KOMEN", "GAAN", "ZIJN", "HEBEN", "DOEN", "ZEGGEN", "MAKEN", "WERKEN",
+        "LEVEN", "WONEN", "DROOM", "VRIJHEID", "VREDE", "LACH", "TRANEN",
+        "ZON", "MAAN", "STER", "HEMEL", "AARDE", "LUCHT", "ZEE", "RIVIER",
+        "BERG", "BOOM", "BLAD", "BLUM", "TUIN", "STAD", "DORP", "WEG", "PAD",
+        "BRUG", "TOREN", "KERK", "MUUR", "VLOER", "PLAFOND", "KAMER", "HOF",
+        "NAAM", "WOORD", "TAAL", "LAND", "VOLK", "NATIE", "WERELD", "JAA",
+        "NEE", "DANK", "DAAROM", "OMDAT", "WAAROM", "HOE", "WAT", "WIJ",
+        "MIJ", "JOUI", "HIJ", "ZIJ", "HET", "DE", "EEN", "EN", "IN", "OP",
+        "MET", "VAN", "UIT", "BIJ", "TUSSEN", "DOOR", "NAAR", "VOOR",
+        "MAAR", "OOK", "OF", "DAN", "ALS", "WANNEER", "INDIEN", "HOEWEL",
+        "TEZIJN", "OPDAT", "ZODAT", "OM", "GEVOLG", "REDEN", "GROND", "DOEL",
+        "EIND", "BEGIN", "MIDDEL", "TIJD", "UUR", "DAG", "WEEK", "MAAND",
+        "JAAR", "EEUW", "SEIZOEN", "LENTE", "ZOMER", "HERFST", "WINTER",
+        "MAANDAG", "DINSDAG", "WOENSDAG", "DONDERDAG", "VRIJDAG", "ZATERDAG",
+        "ZONDAG", "KAAS", "BROOD", "BOTER", "SUIKER", "ZOUT", "OLIE",
+        "APP", "PERE", "SINAAS", "BANAAN", "KIWI", "VIS", "KIP", "RUND",
+        "VARKEN", "KOFFIE", "THEE", "WIJN", "BIER", "SAP",
+        "LIEF", "MOOI", "LEUK", "PRACHTIG", "FANTASTISCH", "WONDER", "SCHATTIG",
+        "GEZOND", "STERK", "GEWELDIG", "GROOT", "KLEIN", "KORTE", "LANGE",
+        "BREDE", "SMALLE", "DIEPE", "LAAE", "SNELLE", "TRAAGE", "HARDE",
+        "ZACHTE", "GLADDE", "RUWE", "VEILIGE", "GEVAARLIKE", "GEMAKKELIKE",
+        "MOEILIJKE", "EENVOUDIGE", "KOMPLIEKE", "DUURE", "GOEDKOOPE",
+        "HOGE", "LAAE", "DIEPE", "SEPE", "WEDE", "SMAL", "BREDE", "DUNNE",
+        "DIKE", "LANG", "KORT", "SWAA", "LIGTE", "SOET", "SUUR", "BITTER",
+        "PIKANT", "MILD", "GEURIG", "GEURLOOS", "FRIS", "VERFRISSEND", "VERMOEID",
+        "UITGEPUT", "SOUT", "PEPPER"
+    };
 
     /// <summary>
     /// Creates a new DutchDictionaryService.
@@ -27,8 +59,8 @@ public class DutchDictionaryService : IDutchDictionaryService
     {
         if (!_isInitialized)
         {
-            _logger.LogWarning("Dictionary not initialized yet. Performing basic validation only.");
-            return BasicValidation(word);
+            _logger.LogWarning("Dictionary not initialized yet. Using fallback validation.");
+            return _fallbackWords.Contains(word);
         }
 
         return _words.Contains(word);
@@ -110,22 +142,5 @@ public class DutchDictionaryService : IDutchDictionaryService
             // Basic validation: only check length and characters
             _isInitialized = true; // Mark as initialized to avoid repeated failures
         }
-    }
-
-    /// <summary>
-    /// Basic validation when dictionary is not available.
-    /// </summary>
-    private static bool BasicValidation(string word)
-    {
-        if (string.IsNullOrEmpty(word))
-            return false;
-
-        if (word.Length < 2)
-            return false;
-
-        if (!word.All(char.IsAsciiLetter))
-            return false;
-
-        return true;
     }
 }

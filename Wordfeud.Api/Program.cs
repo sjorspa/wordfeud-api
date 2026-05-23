@@ -1,6 +1,7 @@
 using Wordfeud.Api.Interfaces;
 using Wordfeud.Api.Services;
 using Wordfeud.Api.Models;
+using Wordfeud.Api.Serialization;
 using Microsoft.OpenApi.Models;
 
 public sealed class Program
@@ -10,7 +11,12 @@ public sealed class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container
-        builder.Services.AddControllers();
+        // Configure JSON serialization with custom Tile[,] converter
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new TileArrayConverter());
+            });
 
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>

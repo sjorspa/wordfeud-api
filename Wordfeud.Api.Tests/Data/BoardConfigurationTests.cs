@@ -16,13 +16,13 @@ public class BoardConfigurationTests
     }
 
     [Fact]
-    public void GetBonusType_ShouldReturnTripleWordForCenter()
+    public void GetBonusType_ShouldReturnDoubleWordForCenter()
     {
         // Act
         var result = BoardConfiguration.GetBonusType(7, 7);
 
         // Assert
-        result.Should().Be(BonusType.TripleWord);
+        result.Should().Be(BonusType.DoubleWord);
     }
 
     [Fact]
@@ -94,10 +94,11 @@ public class BoardConfigurationTests
     public void DoubleWordSquares_ShouldContainAllSquares()
     {
         // Assert
-        BoardConfiguration.DoubleWordSquares.Should().HaveCount(18);
+        BoardConfiguration.DoubleWordSquares.Should().HaveCount(17);
         BoardConfiguration.DoubleWordSquares.Should().Contain((1, 1));
         BoardConfiguration.DoubleWordSquares.Should().Contain((2, 2));
         BoardConfiguration.DoubleWordSquares.Should().Contain((13, 13));
+        BoardConfiguration.DoubleWordSquares.Should().Contain((7, 7));
     }
 
     [Fact]
@@ -115,20 +116,20 @@ public class BoardConfigurationTests
     public void DoubleLetterSquares_ShouldContainAllSquares()
     {
         // Assert
-        BoardConfiguration.DoubleLetterSquares.Should().HaveCount(28);
+        BoardConfiguration.DoubleLetterSquares.Should().HaveCount(24);
         BoardConfiguration.DoubleLetterSquares.Should().Contain((0, 3));
         BoardConfiguration.DoubleLetterSquares.Should().Contain((0, 11));
         BoardConfiguration.DoubleLetterSquares.Should().Contain((3, 0));
     }
 
     [Fact]
-    public void CreateTileBag_ShouldReturn102Tiles()
+    public void CreateTileBag_ShouldReturn104Tiles()
     {
         // Act
         var bag = BoardConfiguration.CreateTileBag();
 
         // Assert
-        bag.Should().HaveCount(102);
+        bag.Should().HaveCount(104);
     }
 
     [Fact]
