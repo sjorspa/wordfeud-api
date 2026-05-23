@@ -637,63 +637,31 @@ public class GameService : IGameService
         var formedWordNames = new List<string>();
         var formedWords = GetFormedWords(game, request);
 
-        if (formedWords.Any())
+        if (!formedWords.Any())
         {
-            foreach (var (word, isCrossWord) in formedWords)
-            {
-                if (isCrossWord)
-                {
-                    // For cross words, we need to recalculate with their positions
-                    var wordScore = CalculateWordScoreForPlacement(game, word, request);
-                    totalScore += wordScore;
-                    formedWordNames.Add(word);
-                }
-                else
-                {
-                    // Main word scoring
-                    var wordScore = 0;
-                    var letterScores = new List<int>();
-
-                    foreach (var tileDto in request.Tiles)
-                    {
-                        var tile = game.Board[tileDto.Row, tileDto.Column];
-                        var letterPoints = tile?.Points ?? 0;
-
-                        // Apply letter bonuses
-                        var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
-                        if (bonus == BonusType.DoubleLetter)
-                            letterPoints *= 2;
-                        else if (bonus == BonusType.TripleLetter)
-                            letterPoints *= 3;
-
-                        letterScores.Add(letterPoints);
-                    }
-
-                    var wordMultiplier = 1;
-                    foreach (var tileDto in request.Tiles)
-                    {
-                        var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
-                        if (bonus == BonusType.DoubleWord)
-                            wordMultiplier *= 2;
-                        else if (bonus == BonusType.TripleWord)
-                            wordMultiplier *= 3;
-                    }
-
-                    wordScore = letterScores.Sum() * wordMultiplier;
-                    totalScore += wordScore;
-                    formedWordNames.Add(word);
-                }
-            }
-        }
-        else
-        {
-            // No words formed (single tile or tiles not forming valid words yet)
-            // Score the tiles at their base value (no word multipliers)
+            // No words formed - score tiles at base value (no word multipliers)
             foreach (var tileDto in request.Tiles)
             {
                 var tile = game.Board[tileDto.Row, tileDto.Column];
                 totalScore += tile?.Points ?? 0;
             }
+
+            // 40-point bonus for playing all 7 tiles
+            if (request.Tiles.Count == 7)
+                totalScore += 40;
+
+            return (totalScore, formedWordNames);
+        }
+
+        // Score each formed word
+        foreach (var (word, isCrossWord) in formedWords)
+        {
+            var wordScore = isCrossWord
+                ? ScoreCrossWord(game, word, request)
+                : ScoreMainWord(game, request);
+
+            totalScore += wordScore;
+            formedWordNames.Add(word);
         }
 
         // 40-point bonus for playing all 7 tiles
@@ -704,63 +672,148 @@ public class GameService : IGameService
     }
 
     /// <summary>
-    /// Calculates score for a cross word placed alongside the main placement.
+    /// Scores the main word by scoring all newly placed tiles with bonuses and word multipliers.
     /// </summary>
-    private int CalculateWordScoreForPlacement(Game game, string word, PlaceTilesRequest request)
+    private int ScoreMainWord(Game game, PlaceTilesRequest request)
     {
-        // Find the tiles that form this cross word
-        var crossTiles = new List<(Tile Tile, int Row, int Column)>();
+        var letterScore = 0;
+        var wordMultiplier = 1;
+
+        foreach (var tileDto in request.Tiles)
+        {
+            var tile = game.Board[tileDto.Row, tileDto.Column];
+            var letterPoints = tile?.Points ?? 0;
+
+            // Apply letter bonuses (only to newly placed tiles)
+            var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
+            if (bonus == BonusType.DoubleLetter)
+                letterPoints *= 2;
+            else if (bonus == BonusType.TripleLetter)
+                letterPoints *= 3;
+
+            letterScore += letterPoints;
+        }
+
+        // Apply word multipliers (only to newly placed tiles)
+        foreach (var tileDto in request.Tiles)
+        {
+            var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
+            if (bonus == BonusType.DoubleWord)
+                wordMultiplier *= 2;
+            else if (bonus == BonusType.TripleWord)
+                wordMultiplier *= 3;
+        }
+
+        return letterScore * wordMultiplier;
+    }
+
+    /// <summary>
+    /// Scores a cross word by identifying which newly placed tiles form this word and scoring them.
+    /// </summary>
+    private int ScoreCrossWord(Game game, string word, PlaceTilesRequest request)
+    {
+        var letterScore = 0;
+        var wordMultiplier = 1;
 
         if (request.Direction == 0)
         {
-            // Horizontal main placement, cross words are vertical
-            var row = request.Tiles[0].Row;
-            foreach (var tile in request.Tiles)
+            // Horizontal main placement - cross words are vertical
+            foreach (var tileDto in request.Tiles)
             {
-                var col = tile.Column;
+                var col = tileDto.Column;
+                var row = tileDto.Row;
+
+                // Check if this tile is part of the cross word by walking vertically
+                var wordBuilder = new StringBuilder();
+
+                // Build word upward from this tile
                 var r = row - 1;
                 while (r >= 0 && game.Board[r, col] != null)
                     r--;
                 r++;
 
+                // Build word downward from this tile
                 while (r < 15 && game.Board[r, col] != null)
                 {
-                    crossTiles.Add((game.Board[r, col]!, r, col));
+                    var t = game.Board[r, col];
+                    wordBuilder.Append(t?.BlankRepresentation ?? t?.Letter ?? string.Empty);
                     r++;
+                }
+
+                // Check if this tile's vertical word matches the cross word
+                if (wordBuilder.ToString() == word)
+                {
+                    var tile = game.Board[row, col];
+                    var letterPoints = tile?.Points ?? 0;
+
+                    // Apply letter bonuses (only to newly placed tiles)
+                    var bonus = BoardConfiguration.GetBonusType(row, col);
+                    if (bonus == BonusType.DoubleLetter)
+                        letterPoints *= 2;
+                    else if (bonus == BonusType.TripleLetter)
+                        letterPoints *= 3;
+
+                    letterScore += letterPoints;
+
+                    // Apply word multipliers (only to newly placed tiles)
+                    if (bonus == BonusType.DoubleWord)
+                        wordMultiplier *= 2;
+                    else if (bonus == BonusType.TripleWord)
+                        wordMultiplier *= 3;
+
+                    break;
                 }
             }
         }
         else
         {
-            // Vertical main placement, cross words are horizontal
-            var col = request.Tiles[0].Column;
-            foreach (var tile in request.Tiles)
+            // Vertical main placement - cross words are horizontal
+            foreach (var tileDto in request.Tiles)
             {
-                var row = tile.Row;
+                var row = tileDto.Row;
+                var col = tileDto.Column;
+
+                // Check if this tile is part of the cross word by walking horizontally
+                var wordBuilder = new StringBuilder();
+
+                // Build word leftward from this tile
                 var c = col - 1;
                 while (c >= 0 && game.Board[row, c] != null)
                     c--;
                 c++;
 
+                // Build word rightward from this tile
                 while (c < 15 && game.Board[row, c] != null)
                 {
-                    crossTiles.Add((game.Board[row, c]!, row, c));
+                    var t = game.Board[row, c];
+                    wordBuilder.Append(t?.BlankRepresentation ?? t?.Letter ?? string.Empty);
                     c++;
                 }
+
+                // Check if this tile's horizontal word matches the cross word
+                if (wordBuilder.ToString() == word)
+                {
+                    var tile = game.Board[row, col];
+                    var letterPoints = tile?.Points ?? 0;
+
+                    // Apply letter bonuses (only to newly placed tiles)
+                    var bonus = BoardConfiguration.GetBonusType(row, col);
+                    if (bonus == BonusType.DoubleLetter)
+                        letterPoints *= 2;
+                    else if (bonus == BonusType.TripleLetter)
+                        letterPoints *= 3;
+
+                    letterScore += letterPoints;
+
+                    // Apply word multipliers (only to newly placed tiles)
+                    if (bonus == BonusType.DoubleWord)
+                        wordMultiplier *= 2;
+                    else if (bonus == BonusType.TripleWord)
+                        wordMultiplier *= 3;
+
+                    break;
+                }
             }
-        }
-
-        // This is a simplified cross-word scoring
-        // In a full implementation, we'd need to identify exactly which tiles belong to this cross word
-        var letterScore = 0;
-        var wordMultiplier = 1;
-
-        foreach (var (tile, row, col) in crossTiles)
-        {
-            letterScore += tile.Points;
-            var bonus = BoardConfiguration.GetBonusType(row, col);
-            if (bonus == BonusType.DoubleWord || bonus == BonusType.TripleWord)
-                wordMultiplier *= (bonus == BonusType.DoubleWord ? 2 : 3);
         }
 
         return letterScore * wordMultiplier;
