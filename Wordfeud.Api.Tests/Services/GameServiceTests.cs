@@ -1059,19 +1059,23 @@ public class GameServiceTests
     [Fact]
     public async Task SwapTilesAsync_ShouldThrowWhenNotEnoughTilesInBag()
     {
-        // Arrange
+        // Arrange: Create a game and drain the bag
         var game = await _service.CreateGameAsync("Player1");
         await _service.JoinGameAsync(game.Id, "Player2");
         var result = await _service.GetGameAsync(game.Id);
         var playerId = result!.CurrentPlayerId!;
         var player = result.Players.First(p => p.Id == playerId);
 
-        // Try to swap more tiles than are in the bag
-        var tileIds = player.Hand.Select(t => t.Id).ToList();
-        var request = new SwapTilesRequest { TileIds = tileIds };
+        // Empty the bag using reflection
+        var gameType = game.GetType();
+        var tileBagProperty = gameType.GetProperty("TileBag");
+        var tileBag = tileBagProperty!.GetValue(game) as List<Tile>;
+        tileBag!.Clear();
 
-        // Act & Assert
-        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, request));
+        // Act & Assert: Try to swap all tiles when bag is empty
+        var swapRequest = new SwapTilesRequest { TileIds = player.Hand.Select(t => t.Id).ToList() };
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, swapRequest));
         ex.Message.ShouldContain("Not enough tiles");
     }
 
