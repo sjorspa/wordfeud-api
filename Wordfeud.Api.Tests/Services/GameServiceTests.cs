@@ -146,7 +146,7 @@ public class GameServiceTests
         // Assert
         result.Players[0].Hand.Should().HaveCount(7);
         result.Players[1].Hand.Should().HaveCount(7);
-        result.TileBag.Should().HaveCount(90); // 104 - 14
+        result.TileBag.Should().HaveCount(83); // 102 - 7 (create) - 12 (join)
     }
 
     #endregion
