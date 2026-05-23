@@ -215,7 +215,7 @@ public class GameServiceTests
 
         // Assert
         placedGame.Board[7, 7].Should().NotBeNull();
-        placedGame.Players.First(p => p.Id == playerId).Hand.Should().HaveCount(6);
+        placedGame.Players.First(p => p.Id == playerId).Hand.Should().HaveCount(7); // 7 - 1 placed + 1 drawn
         placedGame.ConsecutivePasses.Should().Be(0);
         placedGame.MoveNumber.Should().Be(1);
     }
