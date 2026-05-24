@@ -334,7 +334,7 @@ public class GameServiceTests
 
         // After first placement, turn passes to the other player
         var updatedGame = await _service.GetGameAsync(game.Id);
-        var currentPlayerId = updatedGame.CurrentPlayerId!;
+        var currentPlayerId = updatedGame!.CurrentPlayerId!;
         var currentHand = updatedGame.Players.First(p => p.Id == currentPlayerId).Hand;
 
         // Try to place at same position (now with the player who has the turn)

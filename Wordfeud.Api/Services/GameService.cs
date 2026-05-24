@@ -65,7 +65,7 @@ public class GameService : IGameService
     {
         _logger.LogInformation("Player '{PlayerName}' joining game {GameId}", playerName, gameId);
 
-        Game game;
+        Game? game;
         lock (_lock)
         {
             if (!_games.TryGetValue(gameId, out game))
@@ -119,18 +119,19 @@ public class GameService : IGameService
     }
 
     /// <inheritdoc />
+#pragma warning disable CS1998 // Async method lacks 'await' operators
     public async Task<Game> PlaceTilesAsync(string gameId, string playerId, PlaceTilesRequest request)
     {
         _logger.LogInformation("Player {PlayerId} placing {TileCount} tiles in game {GameId}",
             playerId, request.Tiles?.Count ?? 0, gameId);
 
-        Game game;
+        Game? game;
         lock (_lock)
         {
             if (!_games.TryGetValue(gameId, out game))
                 throw new KeyNotFoundException($"Game '{gameId}' not found.");
 
-            if (game.Status == GameStatus.Finished)
+            if (game!.Status == GameStatus.Finished)
                 throw new InvalidOperationException("Game is already finished.");
 
             if (game.CurrentPlayerId != playerId)
@@ -310,17 +311,18 @@ public class GameService : IGameService
     }
 
     /// <inheritdoc />
+#pragma warning disable CS1998 // Async method lacks 'await' operators
     public async Task<Game> PassTurnAsync(string gameId, string playerId)
     {
         _logger.LogInformation("Player {PlayerId} passing turn in game {GameId}", playerId, gameId);
 
-        Game game;
+        Game? game;
         lock (_lock)
         {
             if (!_games.TryGetValue(gameId, out game))
                 throw new KeyNotFoundException($"Game '{gameId}' not found.");
 
-            if (game.Status == GameStatus.Finished)
+            if (game!.Status == GameStatus.Finished)
                 throw new InvalidOperationException("Game is already finished.");
 
             if (game.CurrentPlayerId != playerId)
@@ -342,20 +344,22 @@ public class GameService : IGameService
 
         return game;
     }
+#pragma warning restore CS1998 // Async method lacks 'await' operators
 
     /// <inheritdoc />
+#pragma warning disable CS1998 // Async method lacks 'await' operators
     public async Task<Game> SwapTilesAsync(string gameId, string playerId, SwapTilesRequest request)
     {
         _logger.LogInformation("Player {PlayerId} swapping {TileCount} tiles in game {GameId}",
             playerId, request.TileIds?.Count ?? 0, gameId);
 
-        Game game;
+        Game? game;
         lock (_lock)
         {
             if (!_games.TryGetValue(gameId, out game))
                 throw new KeyNotFoundException($"Game '{gameId}' not found.");
 
-            if (game.Status == GameStatus.Finished)
+            if (game!.Status == GameStatus.Finished)
                 throw new InvalidOperationException("Game is already finished.");
 
             if (game.CurrentPlayerId != playerId)
@@ -406,6 +410,7 @@ public class GameService : IGameService
 
         return game;
     }
+#pragma warning restore CS1998 // Async method lacks 'await' operators
 
     #region Private Methods
 
@@ -611,7 +616,7 @@ public class GameService : IGameService
                 // Build word
                 while (r < 15 && game.Board[r, col] != null)
                 {
-                    var t = game.Board[r, col];
+                    var t = game.Board[r, col]!;
                     crossWord.Append(t.BlankRepresentation ?? t.Letter);
                     r++;
                 }
@@ -638,7 +643,7 @@ public class GameService : IGameService
                 // Build word
                 while (c < 15 && game.Board[row, c] != null)
                 {
-                    var t = game.Board[row, c];
+                    var t = game.Board[row, c]!;
                     crossWord.Append(t.BlankRepresentation ?? t.Letter);
                     c++;
                 }
