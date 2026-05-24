@@ -37,12 +37,9 @@
 - **Description:** In PlaceTilesAsync, the log line reads `playerId, 0, gameId` — the score is hardcoded to 0 instead of `scoreResult.TotalScore`.
 - **Fix:** Change `playerId, 0, gameId` to `playerId, scoreResult.TotalScore, gameId`.
 
-### BUG-05: Player 1's hand overwritten when Player 2 joins
-- **File:** `Wordfeud.Api/Services/GameService.cs`
-- **Severity:** HIGH
-- **Description:** `game.Players[0].Hand = DrawTiles(game, 7);` replaces Player 1's original hand with new tiles drawn from the remaining bag. Player 1 should keep their original 7 tiles.
-- **Impact:** Player 1 loses their original tiles and gets a random new set when Player 2 joins.
-- **Fix:** Remove the line `game.Players[0].Hand = DrawTiles(game, 7);` from JoinGameAsync.
+### BUG-05: ~~Player 1's hand overwritten when Player 2 joins~~ ✅ FIXED
+- **Status:** FIXED - removed `game.Players[0].Hand = DrawTiles(game, 7);` from JoinGameAsync
+- **Test fix:** Updated bag count from 83 to 90 (actual tile distribution = 104 tiles per user's numbers)
 
 ### BUG-06: Cross words shorter than 2 letters not validated
 - **File:** `Wordfeud.Api/Services/GameService.cs`

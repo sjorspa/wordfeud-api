@@ -15,22 +15,22 @@ public class DutchDictionaryService : IDutchDictionaryService
         "HUIS", "LIEFDE", "AAN", "ONDERWIJS", "WATER", "LAMP", "BOEK", "TAFEL",
         "STOEL", "DEUR", "RAAM", "SCHOOL", "VRIEND", "KIND", "GROOT", "KLEIN",
         "DAG", "NACHT", "MOOI", "LEUK", "GOED", "BEST", "SNEL", "LANGZAAM",
-        "KOMEN", "GAAN", "ZIJN", "HEBEN", "DOEN", "ZEGGEN", "MAKEN", "WERKEN",
+        "KOMEN", "GAAN", "ZIJN", "HEBBEN", "DOEN", "ZEGGEN", "MAKEN", "WERKEN",
         "LEVEN", "WONEN", "DROOM", "VRIJHEID", "VREDE", "LACH", "TRANEN",
         "ZON", "MAAN", "STER", "HEMEL", "AARDE", "LUCHT", "ZEE", "RIVIER",
-        "BERG", "BOOM", "BLAD", "BLUM", "TUIN", "STAD", "DORP", "WEG", "PAD",
+        "BERG", "BOOM", "BLAD", "BLOEM", "TUIN", "STAD", "DORP", "WEG", "PAD",
         "BRUG", "TOREN", "KERK", "MUUR", "VLOER", "PLAFOND", "KAMER", "HOF",
-        "NAAM", "WOORD", "TAAL", "LAND", "VOLK", "NATIE", "WERELD", "JAA",
+        "NAAM", "WOORD", "TAAL", "LAND", "VOLK", "NATIE", "WERELD", "JA",
         "NEE", "DANK", "DAAROM", "OMDAT", "WAAROM", "HOE", "WAT", "WIJ",
-        "MIJ", "JOUI", "HIJ", "ZIJ", "HET", "DE", "EEN", "EN", "IN", "OP",
+        "MIJ", "JOULLIE", "HIJ", "ZIJ", "HET", "DE", "EEN", "EN", "IN", "OP",
         "MET", "VAN", "UIT", "BIJ", "TUSSEN", "DOOR", "NAAR", "VOOR",
         "MAAR", "OOK", "OF", "DAN", "ALS", "WANNEER", "INDIEN", "HOEWEL",
         "TEZIJN", "OPDAT", "ZODAT", "OM", "GEVOLG", "REDEN", "GROND", "DOEL",
-        "EIND", "BEGIN", "MIDDEL", "TIJD", "UUR", "DAG", "WEEK", "MAAND",
+        "EIND", "BEGIN", "MIDDEL", "TIJD", "UUR", "WEEK", "MAAND",
         "JAAR", "EEUW", "SEIZOEN", "LENTE", "ZOMER", "HERFST", "WINTER",
         "MAANDAG", "DINSDAG", "WOENSDAG", "DONDERDAG", "VRIJDAG", "ZATERDAG",
         "ZONDAG", "KAAS", "BROOD", "BOTER", "SUIKER", "ZOUT", "OLIE",
-        "APP", "PERE", "SINAAS", "BANAAN", "KIWI", "VIS", "KIP", "RUND",
+        "APP", "PEER", "SINAASAPPEL", "BANAAN", "KIWI", "VIS", "KIP", "RUND",
         "VARKEN", "KOFFIE", "THEE", "WIJN", "BIER", "SAP",
         "LIEF", "MOOI", "LEUK", "PRACHTIG", "FANTASTISCH", "WONDER", "SCHATTIG",
         "GEZOND", "STERK", "GEWELDIG", "GROOT", "KLEIN", "KORTE", "LANGE",
@@ -40,7 +40,7 @@ public class DutchDictionaryService : IDutchDictionaryService
         "HOGE", "LAAE", "DIEPE", "SEPE", "WEDE", "SMAL", "BREDE", "DUNNE",
         "DIKE", "LANG", "KORT", "SWAA", "LIGTE", "SOET", "SUUR", "BITTER",
         "PIKANT", "MILD", "GEURIG", "GEURLOOS", "FRIS", "VERFRISSEND", "VERMOEID",
-        "UITGEPUT", "SOUT", "PEPPER"
+        "UITGEPUT", "SOUT", "PEPER"
     };
 
     /// <summary>
