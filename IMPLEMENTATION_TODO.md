@@ -167,15 +167,11 @@
 - **Description:** Some integration tests may expect specific HTTP status codes (e.g., 404, 400, 409) that the controller does not return. The controller should use ProblemDetails for error responses.
 - **Fix:** Ensure the controller returns correct status codes for all error cases.
 
-### NOT-IMPLEMENTED-01: No validation that player has enough tiles in hand for swap
-- **Severity:** LOW
-- **Description:** SwapTilesAsync checks `game.TileBag.Count < tilesToSwap` but does not verify that the player actually has `tilesToSwap` tiles in their hand.
-- **Fix:** Add `if (player.Hand.Count < tilesToSwap) throw new InvalidOperationException(...)`.
+### NOT-IMPLEMENTED-01: ~~No validation that player has enough tiles in hand for swap~~ ✅ FIXED
+- **Status:** FIXED - SwapTilesAsync now checks `player.Hand.Count < tilesToSwap`
 
-### NOT-IMPLEMENTED-02: First move — tiles must extend contiguously from (7,7)
-- **Severity:** LOW
-- **Description:** The validation checks that the first move covers (7,7) but does not validate that tiles extend contiguously from (7,7) in both directions for the first move.
-- **Fix:** Add a check that for the first move, the placed tiles include (7,7) and extend contiguously from it.
+### NOT-IMPLEMENTED-02: ~~First move — tiles must extend contiguously from (7,7)~~ ✅ FIXED
+- **Status:** FIXED - Validation at line 409-417 checks first move covers (7,7); contiguous check handled by HasGaps and AreInLine
 
 ### NOT-IMPLEMENTED-05: No support for diacritics or special Dutch characters
 - **Severity:** LOW

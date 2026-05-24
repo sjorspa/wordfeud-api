@@ -117,30 +117,40 @@ public class DutchDictionaryService : IDutchDictionaryService
 
     private async Task InitializeFromOpenTaalAsync()
     {
-        try
+        var url = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/wordlist.txt";
+        var maxRetries = 3;
+        var delayMs = 1000;
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
         {
-            // OpenTaal provides Dutch word lists
-            var url = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/wordlist.txt";
+            try
+            {
+                using var httpClient = new HttpClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(5);
 
-            using var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(5);
+                var content = await httpClient.GetStringAsync(url);
+                var words = content
+                    .Split('\n', '\r', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Where(w => w.Length >= 2 && w.All(char.IsAsciiLetter))
+                    .ToArray();
 
-            var content = await httpClient.GetStringAsync(url);
-            var words = content
-                .Split('\n', '\r', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                .Where(w => w.Length >= 2 && w.All(char.IsAsciiLetter))
-                .ToArray();
+                _words.UnionWith(words);
+                _isInitialized = true;
 
-            _words.UnionWith(words);
-            _isInitialized = true;
-
-            _logger.LogInformation("Loaded {Count} words from OpenTaal API", _words.Count);
+                _logger.LogInformation("Loaded {Count} words from OpenTaal API (attempt {Attempt})", _words.Count, attempt);
+                return;
+            }
+            catch (Exception ex) when (attempt < maxRetries)
+            {
+                delayMs *= 2;
+                _logger.LogWarning(ex, "OpenTaal fetch failed (attempt {Attempt}/{MaxRetries}), retrying in {Delay}ms",
+                    attempt, maxRetries, delayMs);
+                await Task.Delay(delayMs);
+            }
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to load Dutch dictionary from OpenTaal. Using basic validation.");
-            // Basic validation: only check length and characters
-            _isInitialized = true; // Mark as initialized to avoid repeated failures
-        }
+
+        _logger.LogError("Failed to load Dutch dictionary from OpenTaal after {MaxRetries} attempts. Using fallback validation.",
+            maxRetries);
+        _isInitialized = true;
     }
 }
