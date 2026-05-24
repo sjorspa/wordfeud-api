@@ -1416,7 +1416,7 @@ public class GameServiceTests
         await _service.JoinGameAsync(game.Id, "Player2");
         var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
 
-        // Step 1: Player1 places "Kelk" horizontally on center (7,7)-(7,10)
+        // Step 1: Player1 places "Kelk" horizontally from center (7,7)-(7,10)
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
@@ -1434,9 +1434,10 @@ public class GameServiceTests
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
         var player1 = placedGame1.Players.First(p => p.Id == player1Id);
-        player1.Score.Should().BeGreaterThan(0);
+        // KELK: K(3)+E(1)+L(3)+K(3)=10, (7,7)=DW → 10×2 = 20
+        player1.Score.Should().Be(20);
 
-        // Step 2: Player2 places "Kaars" vertically also on the center (7,7)-(11,7), sharing K at (7,7)
+        // Step 2: Player2 places "Kaars" vertically from center (7,7)-(11,7), sharing K at (7,7)
         var result2 = await _service.GetGameAsync(game.Id);
         var player2Id = result2!.CurrentPlayerId!;
         var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
@@ -1458,9 +1459,10 @@ public class GameServiceTests
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
         var player2 = placedGame2.Players.First(p => p.Id == player2Id);
-        player2.Score.Should().BeGreaterThan(0);
+        // KAARS: K(3)+A(1)+A(1)+R(2)+S(DL→4)=11
+        player2.Score.Should().Be(11);
 
-        // Step 3: Player1 places "Hels" horizontally at (8,8)-(8,11)
+        // Step 3: Player1 places "Hels" vertically at col 8, rows 6-9
         var result3 = await _service.GetGameAsync(game.Id);
         var player1AgainId = result3!.CurrentPlayerId!;
         var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
@@ -1469,25 +1471,34 @@ public class GameServiceTests
         {
             Tiles = new List<TilePlacementDto>
             {
-                new() { Letter = "H", IsBlank = false, TileId = hand3[0].Id, Row = 8, Column = 8 },
-                new() { Letter = "E", IsBlank = false, TileId = hand3[1].Id, Row = 8, Column = 9 },
-                new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 10 },
-                new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 8, Column = 11 }
+                new() { Letter = "H", IsBlank = false, TileId = hand3[0].Id, Row = 6, Column = 8 },
+                new() { Letter = "E", IsBlank = false, TileId = hand3[1].Id, Row = 7, Column = 8 },
+                new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 8 },
+                new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 9, Column = 8 }
             },
-            StartRow = 8,
+            StartRow = 6,
             StartColumn = 8,
-            Direction = 0
+            Direction = 1
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
         var player1Again = placedGame3.Players.First(p => p.Id == player1AgainId);
 
-        // Verify: score should be positive because multiple words were formed
-        // (main word "Hels" + cross words formed with vertical columns)
-        player1Again.Score.Should().BeGreaterThan(0);
+        // Verify exact score for "Hels" placement:
+        // Board state before placement:
+        //   "Kelk" at (7,7)-(7,10): K,E,L,K (horizontal)
+        //   "Kaars" at (7,7)-(11,7): K,A,A,R,S (vertical)
+        // Main word "Hels" vertical at (6,8)-(9,8):
+        //   H(6,8) on DL: 4*2=8, E(7,8): 1, L(8,8) on DL: 3*2=6, S(9,8): 2
+        //   Letter subtotal = 17, no word multipliers → 17
+        // Cross words (horizontal):
+        //   "AL" at row 8: A(8,7)=1 + L(8,8)=3 → 4
+        //   "AS" at row 9: A(9,7)=1 + S(9,8)=2 → 3
+        // Total = 17 + 4 + 3 = 24
+        player1Again.Score.Should().Be(24);
 
-        // Verify multiple words were formed
-        placedGame3.FormedWords.Should().HaveCountGreaterThan(1);
+        // Verify 3 words were formed
+        placedGame3.FormedWords.Should().HaveCount(3); // "Hels" + "AL" + "AS"
 
         // Verify "Hels" is one of the formed words
         placedGame3.FormedWords.Should().Contain("Hels");
