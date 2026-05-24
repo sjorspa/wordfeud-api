@@ -321,8 +321,12 @@ public class GameService : IGameService
 
             var player = game.Players.First(p => p.Id == playerId);
 
+            // Check if player has enough tiles to swap
+            if (player.Hand.Count < tilesToSwap)
+                throw new InvalidOperationException(
+                    $"Player has only {player.Hand.Count} tiles but wants to swap {tilesToSwap}.");
+
             // Check if enough tiles remain in the bag
-            var tilesToSwap = request.TileIds?.Count ?? 0;
             if (game.TileBag.Count < tilesToSwap)
                 throw new InvalidOperationException(
                     $"Not enough tiles in the bag to swap. Available: {game.TileBag.Count}, Requested: {tilesToSwap}");
