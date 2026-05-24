@@ -46,4 +46,11 @@ public interface IGameService
     /// Swaps tiles from a player's hand back to the bag.
     /// </summary>
     Task<Game> SwapTilesAsync(string gameId, string playerId, SwapTilesRequest request);
+
+    /// <summary>
+    /// Gets the move history for a game.
+    /// </summary>
+    /// <param name="gameId">The game ID.</param>
+    /// <returns>The move history as a list of MoveHistory records.</returns>
+    Task<List<MoveHistory>> GetMoveHistoryAsync(string gameId);
 }

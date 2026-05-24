@@ -64,6 +64,11 @@ public class Game
     public List<string> FormedWords { get; set; } = new();
 
     /// <summary>
+    /// The list of all moves made in the game.
+    /// </summary>
+    public List<MoveHistory> MoveHistory { get; set; } = new();
+
+    /// <summary>
     /// The number of consecutive passes in the current turn.
     /// </summary>
     public int ConsecutivePasses { get; set; }
