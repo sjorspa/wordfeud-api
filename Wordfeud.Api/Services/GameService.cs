@@ -435,10 +435,9 @@ public class GameService : IGameService
     /// </summary>
     private void ShuffleTileBag(Game game)
     {
-        var random = new Random();
         for (var i = game.TileBag.Count - 1; i > 0; i--)
         {
-            var j = random.Next(i + 1);
+            var j = Random.Shared.Next(i + 1);
             (game.TileBag[i], game.TileBag[j]) = (game.TileBag[j], game.TileBag[i]);
         }
     }
@@ -762,108 +761,88 @@ public class GameService : IGameService
         var letterScore = 0;
         var wordMultiplier = 1;
 
-        if (request.Direction == 0)
+        // Determine the perpendicular direction for the cross word
+        var isHorizontalMain = request.Direction == 0;
+
+        foreach (var tileDto in request.Tiles)
         {
-            // Horizontal main placement - cross words are vertical
-            foreach (var tileDto in request.Tiles)
+            var wordBuilder = isHorizontalMain
+                ? BuildWordVertical(game, tileDto.Row, tileDto.Column)
+                : BuildWordHorizontal(game, tileDto.Row, tileDto.Column);
+
+            if (wordBuilder.ToString() == word)
             {
-                var col = tileDto.Column;
-                var row = tileDto.Row;
+                var tile = game.Board[tileDto.Row, tileDto.Column];
+                var letterPoints = tile?.Points ?? 0;
 
-                // Check if this tile is part of the cross word by walking vertically
-                var wordBuilder = new StringBuilder();
+                // Apply letter bonuses (only to newly placed tiles)
+                var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
+                if (bonus == BonusType.DoubleLetter)
+                    letterPoints *= 2;
+                else if (bonus == BonusType.TripleLetter)
+                    letterPoints *= 3;
 
-                // Build word upward from this tile
-                var r = row - 1;
-                while (r >= 0 && game.Board[r, col] != null)
-                    r--;
-                r++;
+                letterScore += letterPoints;
 
-                // Build word downward from this tile
-                while (r < 15 && game.Board[r, col] != null)
-                {
-                    var t = game.Board[r, col];
-                    wordBuilder.Append(t?.BlankRepresentation ?? t?.Letter ?? string.Empty);
-                    r++;
-                }
+                // Apply word multipliers (only to newly placed tiles)
+                if (bonus == BonusType.DoubleWord)
+                    wordMultiplier *= 2;
+                else if (bonus == BonusType.TripleWord)
+                    wordMultiplier *= 3;
 
-                // Check if this tile's vertical word matches the cross word
-                if (wordBuilder.ToString() == word)
-                {
-                    var tile = game.Board[row, col];
-                    var letterPoints = tile?.Points ?? 0;
-
-                    // Apply letter bonuses (only to newly placed tiles)
-                    var bonus = BoardConfiguration.GetBonusType(row, col);
-                    if (bonus == BonusType.DoubleLetter)
-                        letterPoints *= 2;
-                    else if (bonus == BonusType.TripleLetter)
-                        letterPoints *= 3;
-
-                    letterScore += letterPoints;
-
-                    // Apply word multipliers (only to newly placed tiles)
-                    if (bonus == BonusType.DoubleWord)
-                        wordMultiplier *= 2;
-                    else if (bonus == BonusType.TripleWord)
-                        wordMultiplier *= 3;
-
-                    break;
-                }
-            }
-        }
-        else
-        {
-            // Vertical main placement - cross words are horizontal
-            foreach (var tileDto in request.Tiles)
-            {
-                var row = tileDto.Row;
-                var col = tileDto.Column;
-
-                // Check if this tile is part of the cross word by walking horizontally
-                var wordBuilder = new StringBuilder();
-
-                // Build word leftward from this tile
-                var c = col - 1;
-                while (c >= 0 && game.Board[row, c] != null)
-                    c--;
-                c++;
-
-                // Build word rightward from this tile
-                while (c < 15 && game.Board[row, c] != null)
-                {
-                    var t = game.Board[row, c];
-                    wordBuilder.Append(t?.BlankRepresentation ?? t?.Letter ?? string.Empty);
-                    c++;
-                }
-
-                // Check if this tile's horizontal word matches the cross word
-                if (wordBuilder.ToString() == word)
-                {
-                    var tile = game.Board[row, col];
-                    var letterPoints = tile?.Points ?? 0;
-
-                    // Apply letter bonuses (only to newly placed tiles)
-                    var bonus = BoardConfiguration.GetBonusType(row, col);
-                    if (bonus == BonusType.DoubleLetter)
-                        letterPoints *= 2;
-                    else if (bonus == BonusType.TripleLetter)
-                        letterPoints *= 3;
-
-                    letterScore += letterPoints;
-
-                    // Apply word multipliers (only to newly placed tiles)
-                    if (bonus == BonusType.DoubleWord)
-                        wordMultiplier *= 2;
-                    else if (bonus == BonusType.TripleWord)
-                        wordMultiplier *= 3;
-
-                    break;
-                }
+                break;
             }
         }
 
         return letterScore * wordMultiplier;
+    }
+
+    /// <summary>
+    /// Builds a word by walking vertically from the given position.
+    /// </summary>
+    private static StringBuilder BuildWordVertical(Game game, int startRow, int startCol)
+    {
+        var wordBuilder = new StringBuilder();
+
+        // Build word upward from this tile
+        var r = startRow - 1;
+        while (r >= 0 && game.Board[r, startCol] != null)
+            r--;
+        r++;
+
+        // Build word downward from this tile
+        while (r < 15 && game.Board[r, startCol] != null)
+        {
+            var tile = game.Board[r, startCol];
+            wordBuilder.Append(tile?.BlankRepresentation ?? tile?.Letter ?? string.Empty);
+            r++;
+        }
+
+        return wordBuilder;
+    }
+
+    /// <summary>
+    /// Builds a word by walking horizontally from the given position.
+    /// </summary>
+    private static StringBuilder BuildWordHorizontal(Game game, int startRow, int startCol)
+    {
+        var wordBuilder = new StringBuilder();
+
+        // Build word leftward from this tile
+        var c = startCol - 1;
+        while (c >= 0 && game.Board[startRow, c] != null)
+            c--;
+        c++;
+
+        // Build word rightward from this tile
+        while (c < 15 && game.Board[startRow, c] != null)
+        {
+            var tile = game.Board[startRow, c];
+            wordBuilder.Append(tile?.BlankRepresentation ?? tile?.Letter ?? string.Empty);
+            c++;
+        }
+
+        return wordBuilder;
     }
 
     /// <summary>

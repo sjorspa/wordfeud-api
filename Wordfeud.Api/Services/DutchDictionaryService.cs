@@ -35,13 +35,13 @@ public class DutchDictionaryService : IDutchDictionaryService
         "VARKEN", "KOFFIE", "THEE", "WIJN", "BIER", "SAP",
         "LIEF", "MOOI", "LEUK", "PRACHTIG", "FANTASTISCH", "WONDER", "SCHATTIG",
         "GEZOND", "STERK", "GEWELDIG", "GROOT", "KLEIN", "KORTE", "LANGE",
-        "BREDE", "SMALLE", "DIEPE", "LAAE", "SNELLE", "TRAAGE", "HARDE",
-        "ZACHTE", "GLADDE", "RUWE", "VEILIGE", "GEVAARLIKE", "GEMAKKELIKE",
-        "MOEILIJKE", "EENVOUDIGE", "KOMPLIEKE", "DUURE", "GOEDKOOPE",
-        "HOGE", "LAAE", "DIEPE", "SEPE", "WEDE", "SMAL", "BREDE", "DUNNE",
-        "DIKE", "LANG", "KORT", "SWAA", "LIGTE", "SOET", "SUUR", "BITTER",
+        "BREDE", "SMALLE", "DIEPE", "LANGE", "SNELLE", "TRAAGE", "HARDE",
+        "ZACHTE", "GLADDE", "RUWE", "VEILIGE", "GEVAARLIJKE", "GEMAKKELIJKE",
+        "MOEILIJKE", "KOMPLIEKE", "DUURE", "GOEDKOOPE",
+        "HOGE", "LANGE", "DIEPE", "SEPE", "WEDE", "SMAL", "BREDE", "DUNNE",
+        "DIKE", "LANG", "KORT", "SWAA", "LIGTE", "ZOET", "ZUUR", "BITTER",
         "PIKANT", "MILD", "GEURIG", "GEURLOOS", "FRIS", "VERFRISSEND", "VERMOEID",
-        "UITGEPUT", "SOUT", "PEPER"
+        "UITGEPUT", "ZOUT", "PEPER"
     };
 
     /// <summary>
