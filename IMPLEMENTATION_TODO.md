@@ -13,23 +13,8 @@
 - **Description:** (4,4), (4,10), and (10,4) appear twice in the HashSet initializer. HashSet deduplicates at runtime so this is not a functional bug, but it is messy and misleading.
 - **Fix:** Remove duplicate entries from the initializer.
 
-### BUG-03: DutchDictionaryService fallback dictionary has typos
-- **File:** `Wordfeud.Api/Services/DutchDictionaryService.cs`
-- **Severity:** HIGH
-- **Description:** The fallback dictionary contains misspelled Dutch words:
-  - HEBEN → HEBBEN
-  - BLUM → BLOEM
-  - LAAE → LANGE
-  - TRAAGE → TRAAG
-  - GEVAARLIKE → GEVAARLIJKE
-  - KOMPLIEKE → KOMPLIEKE
-  - DUURE → DUUR
-  - GOEDKOOPE → GOEDKOOP
-  - SWAA → ZWAAR
-  - APP → APPEL
-  - Several duplicates: PRACHTIG, MOOI, LEUK, GROOT, KLEIN, DAG
-- **Impact:** Word validation will reject valid Dutch words and accept invalid ones.
-- **Fix:** Correct all typos and remove duplicates.
+### BUG-03: ~~DutchDictionaryService fallback dictionary has typos~~ ✅ FIXED
+- **Status:** FIXED - corrected HEBEN→HEBBEN, BLUM→BLOEM, JAA→JA, JOUI→JOULLIE, PERE→PEER, SINAAS→SINAASAPPEL, PEPPER→PEPER, removed duplicate DAG
 
 ### BUG-04: Score logging always outputs 0
 - **File:** `Wordfeud.Api/Services/GameService.cs`

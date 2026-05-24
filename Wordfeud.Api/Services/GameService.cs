@@ -223,10 +223,10 @@ public class GameService : IGameService
 
             // Check for game end conditions
             CheckGameEnd(game);
-        }
 
-        _logger.LogInformation("Player {PlayerId} scored {Score} points in game {GameId}",
-            playerId, 0, gameId); // Score logged after calculation
+            _logger.LogInformation("Player {PlayerId} scored {Score} points in game {GameId}",
+                playerId, scoreResult.TotalScore, gameId);
+        }
 
         return game;
     }
@@ -436,7 +436,7 @@ public class GameService : IGameService
         var formedWords = GetFormedWords(game, request);
         foreach (var wordInfo in formedWords)
         {
-            if (wordInfo.Word.Length < 2 && !wordInfo.IsCrossWord)
+            if (wordInfo.Word.Length < 2)
             {
                 return (false, $"Formed word '{wordInfo.Word}' is too short.");
             }
