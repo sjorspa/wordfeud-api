@@ -129,11 +129,6 @@ public class GameScoresDto
     public string Id { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets the game ID.
-    /// </summary>
-    public string GameId => Id;
-
-    /// <summary>
     /// Gets the game status.
     /// </summary>
     public string Status { get; set; } = string.Empty;
@@ -189,13 +184,6 @@ public class BoardStateDto
     /// Gets the tiles on the board as a list of placed tiles.
     /// </summary>
     public List<BoardTileDto> Tiles { get; set; } = new();
-
-    /// <summary>
-    /// Gets the board as a 2D array for backward compatibility.
-    /// Returns null (DTO does not expose 2D array).
-    /// </summary>
-    [Obsolete("Use Tiles property instead.")]
-    public Tile?[,] Board => null!;
 }
 
 /// <summary>
