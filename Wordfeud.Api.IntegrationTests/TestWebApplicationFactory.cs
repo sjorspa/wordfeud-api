@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Wordfeud.Api.Serialization;
 
-namespace Wordfeud.Api.Tests;
+namespace Wordfeud.Api.IntegrationTests;
 
 /// <summary>
 /// Custom WebApplicationFactory that configures JSON serialization

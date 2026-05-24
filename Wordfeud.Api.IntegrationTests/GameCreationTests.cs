@@ -1,9 +1,11 @@
+using Xunit;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Wordfeud.Api.Models;
 using System.Net.Http.Json;
 
-namespace Wordfeud.Api.Tests.Integration;
+namespace Wordfeud.Api.IntegrationTests;
 
 /// <summary>
 /// Integration tests for game creation via the <c>POST /api/games</c> endpoint.

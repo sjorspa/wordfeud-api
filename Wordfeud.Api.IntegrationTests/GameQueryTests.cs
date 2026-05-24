@@ -1,8 +1,10 @@
+using Xunit;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Wordfeud.Api.Models;
 using System.Net.Http.Json;
 
-namespace Wordfeud.Api.Tests.Integration;
+namespace Wordfeud.Api.IntegrationTests;
 
 /// <summary>
 /// Integration tests for querying game state via the <c>GET /api/games/{id}</c>, <c>GET /api/games/{id}/scores</c>, and <c>GET /api/games/{id}/board</c> endpoints.

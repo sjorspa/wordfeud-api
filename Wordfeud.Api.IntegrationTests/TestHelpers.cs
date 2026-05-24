@@ -3,7 +3,7 @@ using System.Text.Json;
 using Wordfeud.Api.Models;
 using Wordfeud.Api.Serialization;
 
-namespace Wordfeud.Api.Tests;
+namespace Wordfeud.Api.IntegrationTests;
 
 /// <summary>
 /// Helper methods for integration tests that need to deserialize Game objects

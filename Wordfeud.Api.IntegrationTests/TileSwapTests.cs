@@ -1,8 +1,10 @@
+using Xunit;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Wordfeud.Api.Models;
 using System.Net.Http.Json;
 
-namespace Wordfeud.Api.Tests.Integration;
+namespace Wordfeud.Api.IntegrationTests;
 
 /// <summary>
 /// Integration tests for tile swapping via the <c>POST /api/games/{id}/swap</c> endpoint.
