@@ -27,7 +27,7 @@ Every item listed below has been implemented, tested, and verified. No outstandi
 
 ### BUG-07: Dutch tile distribution incorrect - FIXED
 - Updated to official Dutch distribution: N=11 tiles, R=2pts, I=2pts, U=2pts, Z=5pts
-- Total tiles: 102 (matching official Wordfeud rules)
+- Total tiles: 104 (matching user's stated distribution)
 - Verified: A=1pt x7, B=4pt x2, C=5pt x2, D=2pt x5, E=1pt x18, F=4pt x2, G=3pt x3, H=4pt x2, I=2pt x4, J=4pt x2, K=3pt x3, L=3pt x3, M=3pt x3, N=1pt x11, O=1pt x6, P=4pt x2, Q=10pt x1, R=2pt x5, S=2pt x5, T=2pt x5, U=2pt x3, V=4pt x2, W=5pt x2, X=8pt x1, Y=8pt x1, Z=5pt x2, Blank=0pt x2
 
 ## 2. Features Implemented
