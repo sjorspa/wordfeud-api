@@ -93,9 +93,7 @@ public class GameService : IGameService
             game.Players.Add(secondPlayer);
             game.Status = GameStatus.InProgress;
             game.CurrentPlayerId = game.Players[0].Id;
-            game.Players[0].Hand = DrawTiles(game, 7);
             game.Players[1].Hand = DrawTiles(game, 7);
-            game.Players[0].TilesDrawn = 7;
             game.Players[1].TilesDrawn = 7;
         }
 
