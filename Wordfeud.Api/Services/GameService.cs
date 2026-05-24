@@ -225,6 +225,24 @@ public class GameService : IGameService
             // Check for game end conditions
             CheckGameEnd(game);
 
+            // Record move history
+            game.MoveHistory.Add(new MoveHistory
+            {
+                MoveNumber = game.MoveNumber,
+                PlayerId = playerId,
+                PlayerName = player.Name,
+                ActionType = "place",
+                Word = scoreResult.FormedWords.Count > 0 ? string.Join(", ", scoreResult.FormedWords) : null,
+                Score = scoreResult.TotalScore,
+                Tiles = request.Tiles.Select(t => new MoveTileDto
+                {
+                    Letter = t.Letter,
+                    Row = t.Row,
+                    Column = t.Column
+                }).ToList(),
+                Timestamp = DateTime.UtcNow
+            });
+
             _logger.LogInformation("Player {PlayerId} scored {Score} points in game {GameId}",
                 playerId, scoreResult.TotalScore, gameId);
         }
@@ -340,6 +358,18 @@ public class GameService : IGameService
                 CalculateFinalScores(game);
                 _logger.LogInformation("Game {GameId} ended due to three consecutive passes", gameId);
             }
+
+            // Record move history
+            var passingPlayer = game.Players.First(p => p.Id == playerId);
+            game.MoveHistory.Add(new MoveHistory
+            {
+                MoveNumber = game.MoveNumber,
+                PlayerId = playerId,
+                PlayerName = passingPlayer.Name,
+                ActionType = "pass",
+                Score = 0,
+                Timestamp = DateTime.UtcNow
+            });
         }
 
         return game;
@@ -406,6 +436,23 @@ public class GameService : IGameService
             game.MoveNumber++;
             game.CurrentPlayerId = GetNextPlayerId(game, playerId);
             game.UpdatedAt = DateTime.UtcNow;
+
+            // Record move history
+            game.MoveHistory.Add(new MoveHistory
+            {
+                MoveNumber = game.MoveNumber,
+                PlayerId = playerId,
+                PlayerName = player.Name,
+                ActionType = "swap",
+                Score = 0,
+                Tiles = request.TileIds.Select(id => new MoveTileDto
+                {
+                    Letter = "swap",
+                    Row = 0,
+                    Column = 0
+                }).ToList(),
+                Timestamp = DateTime.UtcNow
+            });
         }
 
         return game;
@@ -898,6 +945,26 @@ public class GameService : IGameService
             var opponentRemaining = opponent.Hand.Sum(t => t.Points);
             finisher.Score += opponentRemaining;
         }
+    }
+
+    /// <inheritdoc />
+    public Task<List<MoveHistory>> GetMoveHistoryAsync(string gameId)
+    {
+        _logger.LogInformation("Getting move history for game {GameId}", gameId);
+
+        Game? game;
+        lock (_lock)
+        {
+            if (!_games.TryGetValue(gameId, out game))
+            {
+                throw new KeyNotFoundException($"Game '{gameId}' not found.");
+            }
+        }
+
+        var moveHistory = game!.MoveHistory.ToList();
+
+        _logger.LogInformation("Move history retrieved for game {GameId}: {MoveCount} moves", gameId, moveHistory.Count);
+        return Task.FromResult(moveHistory);
     }
 
     #endregion

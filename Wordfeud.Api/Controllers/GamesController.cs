@@ -375,6 +375,34 @@ public class GamesController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the move history for a game.
+    /// </summary>
+    /// <param name="id">The game ID.</param>
+    /// <returns>The move history.</returns>
+    [HttpGet("{id}/moves")]
+    [ProducesResponseType(typeof(List<MoveHistory>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMoveHistory(string id)
+    {
+        _logger.LogInformation("Getting move history for game {GameId}", id);
+
+        try
+        {
+            var moveHistory = await _gameService.GetMoveHistoryAsync(id);
+            return Ok(moveHistory);
+        }
+        catch (KeyNotFoundException)
+        {
+            _logger.LogWarning("Game {GameId} not found", id);
+            return NotFound(new ProblemDetails
+            {
+                Title = "Not Found",
+                Detail = $"Game '{id}' not found."
+            });
+        }
+    }
+
+    /// <summary>
     /// Extracts validation errors from ModelState.
     /// </summary>
     private Dictionary<string, string[]> GetValidationErrors()
