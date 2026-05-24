@@ -22,7 +22,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task CompleteGameFromStartToEnd_ShouldValidateAllGameplay()
     {
         // ========== PHASE 1: Game Setup ==========
-        
+
         // Create game with Player1
         var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         createResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
@@ -50,7 +50,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
 
         // ========== PHASE 2: First Move - Player1 places single tile on center (7,7) ==========
         // First move has no word validation requirement
-        
+
         var currentPlayerId = currentGame.CurrentPlayerId;
         var currentPlayer = currentGame.Players.First(p => p.Id == currentPlayerId);
         var tile = currentPlayer.Hand[0];
@@ -89,7 +89,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         currentGame.ConsecutivePasses.Should().Be(0);
 
         // ========== PHASE 3: Player2 passes turn (no word needed) ==========
-        
+
         currentPlayerId = currentGame.CurrentPlayerId;
         var passResponse1 = await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
         passResponse1.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -99,7 +99,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         currentGame!.ConsecutivePasses.Should().Be(1);
 
         // ========== PHASE 4: Player1 swaps tiles (bag has enough tiles) ==========
-        
+
         currentPlayerId = currentGame.CurrentPlayerId;
         currentPlayer = currentGame.Players.First(p => p.Id == currentPlayerId);
         var swapTileIds = currentPlayer.Hand.Take(2).Select(t => t.Id).ToArray();
@@ -112,7 +112,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         currentGame.TileBag.Should().HaveCountGreaterThan(0); // Tile count skipped due to serialization
 
         // ========== PHASE 5: Player2 passes turn ==========
-        
+
         currentPlayerId = currentGame.CurrentPlayerId;
         await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
 
@@ -122,7 +122,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         currentGame!.ConsecutivePasses.Should().Be(1);
 
         // ========== PHASE 6: Player1 passes, Player2 passes, Player1 passes (3 consecutive - game ends) ==========
-        
+
         currentPlayerId = currentGame.CurrentPlayerId;
         await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
 
@@ -136,14 +136,14 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         finalPassResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         // ========== PHASE 7: Verify game ended ==========
-        
+
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
         var finalGame = await TestHelpers.ReadAsGameAsync(gameState);
         finalGame!.Status.Should().Be(GameStatus.Finished);
         finalGame.ConsecutivePasses.Should().Be(3);
 
         // ========== PHASE 8: Verify scores ==========
-        
+
         var scoresResponse = await _client.GetAsync($"/api/games/{game.Id}/scores");
         scoresResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
         var scores = await scoresResponse.Content.ReadFromJsonAsync<GameScoresDto>();
@@ -153,7 +153,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         scores.Players.Should().AllSatisfy(p => p.Score.Should().BeLessThanOrEqualTo(1000000)); // Valid integer score
 
         // ========== PHASE 9: Verify board has tiles from both players ==========
-        
+
         var boardResponse = await _client.GetAsync($"/api/games/{game.Id}/board");
         boardResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
@@ -173,7 +173,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         finalGame.Board[7, 7].Should().NotBeNull();
 
         // ========== PHASE 10: Verify game cannot be modified after finish ==========
-        
+
         var invalidPlaceResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player1.Id}", new
         {
             tiles = new[] { new { letter = "X", isBlank = false, tileId = "test", row = 8, column = 8 } },
@@ -190,7 +190,7 @@ public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
         invalidJoinResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
 
         // ========== FINAL ASSERTIONS ==========
-        
+
         finalGame.Players.Should().HaveCount(2);
         finalGame.Players.Should().Contain(p => p.Name == "Player1");
         finalGame.Players.Should().Contain(p => p.Name == "Player2");
