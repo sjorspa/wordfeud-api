@@ -457,12 +457,11 @@ public class GameService : IGameService
     /// </summary>
     private bool ConnectsToExistingTiles(Game game, PlaceTilesRequest request)
     {
-        var directions = request.Direction == 0
-            ? new[] { (0, 1), (0, -1) }  // horizontal: check left and right
-            : new[] { (1, 0), (-1, 0) };  // vertical: check up and down
-
         foreach (var tile in request.Tiles)
         {
+            // Check all 4 directions for adjacent existing tiles
+            var directions = new[] { (0, 1), (0, -1), (1, 0), (-1, 0) };
+
             foreach (var (dr, dc) in directions)
             {
                 var r = tile.Row + dr;
@@ -533,31 +532,25 @@ public class GameService : IGameService
 
     /// <summary>
     /// Gets all words formed by a placement, including cross words.
+    /// The main word is built from the request tile letters (not the board) so it works
+    /// both during validation (before placement) and scoring (after placement).
     /// </summary>
     private List<(string Word, bool IsCrossWord)> GetFormedWords(Game game, PlaceTilesRequest request)
     {
         var words = new List<(string Word, bool IsCrossWord)>();
 
+        // Build the main word from request tile letters directly
+        var mainWord = request.Direction == 0
+            ? BuildStringFromTiles(request.Tiles.OrderBy(t => t.Column).ToList(), request.BlankAssignments)
+            : BuildStringFromTiles(request.Tiles.OrderBy(t => t.Row).ToList(), request.BlankAssignments);
+
+        if (mainWord.Length >= 2)
+            words.Add((mainWord, false));
+
         if (request.Direction == 0)
         {
-            // Horizontal placement
+            // Horizontal placement - cross words are vertical
             var row = request.Tiles[0].Row;
-
-            // Main word (horizontal)
-            var mainWord = new StringBuilder();
-            var startCol = request.Tiles.Min(t => t.Column);
-            var endCol = request.Tiles.Max(t => t.Column);
-
-            for (var c = startCol; c <= endCol; c++)
-            {
-                var tile = game.Board[row, c];
-                mainWord.Append(tile?.BlankRepresentation ?? tile?.Letter ?? string.Empty);
-            }
-
-            if (mainWord.Length >= 2)
-                words.Add((mainWord.ToString(), false));
-
-            // Cross words (vertical) for each placed tile
             foreach (var tile in request.Tiles)
             {
                 var col = tile.Column;
@@ -573,34 +566,18 @@ public class GameService : IGameService
                 while (r < 15 && game.Board[r, col] != null)
                 {
                     var t = game.Board[r, col];
-                    crossWord.Append(t?.BlankRepresentation ?? t?.Letter ?? string.Empty);
+                    crossWord.Append(t.BlankRepresentation ?? t.Letter);
                     r++;
                 }
 
-                if (crossWord.Length >= 2 && crossWord.ToString() != mainWord.ToString())
+                if (crossWord.Length >= 2 && crossWord.ToString() != mainWord)
                     words.Add((crossWord.ToString(), true));
             }
         }
         else
         {
-            // Vertical placement
+            // Vertical placement - cross words are horizontal
             var col = request.Tiles[0].Column;
-
-            // Main word (vertical)
-            var mainWord = new StringBuilder();
-            var startRow = request.Tiles.Min(t => t.Row);
-            var endRow = request.Tiles.Max(t => t.Row);
-
-            for (var r = startRow; r <= endRow; r++)
-            {
-                var tile = game.Board[r, col];
-                mainWord.Append(tile?.BlankRepresentation ?? tile?.Letter ?? string.Empty);
-            }
-
-            if (mainWord.Length >= 2)
-                words.Add((mainWord.ToString(), false));
-
-            // Cross words (horizontal) for each placed tile
             foreach (var tile in request.Tiles)
             {
                 var row = tile.Row;
@@ -616,7 +593,7 @@ public class GameService : IGameService
                 while (c < 15 && game.Board[row, c] != null)
                 {
                     var t = game.Board[row, c];
-                    crossWord.Append(t?.BlankRepresentation ?? t?.Letter ?? string.Empty);
+                    crossWord.Append(t.BlankRepresentation ?? t.Letter);
                     c++;
                 }
 
@@ -626,6 +603,25 @@ public class GameService : IGameService
         }
 
         return words;
+    }
+
+    /// <summary>
+    /// Builds a word string from a list of tiles, using their letters or blank representations
+    /// from the request's BlankAssignments dictionary.
+    /// </summary>
+    private static string BuildStringFromTiles(List<TilePlacementDto> tiles, IDictionary<string, string>? blankAssignments)
+    {
+        var sb = new StringBuilder();
+        foreach (var tile in tiles)
+        {
+            var letter = tile.Letter ?? string.Empty;
+            if (blankAssignments != null && blankAssignments.ContainsKey(tile.TileId))
+            {
+                letter = blankAssignments[tile.TileId];
+            }
+            sb.Append(letter);
+        }
+        return sb.ToString();
     }
 
     /// <summary>
