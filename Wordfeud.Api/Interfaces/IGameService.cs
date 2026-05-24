@@ -30,12 +30,12 @@ public interface IGameService
     /// <summary>
     /// Gets the scores for all players in a game.
     /// </summary>
-    Task<Game> GetScoresAsync(string gameId);
+    Task<GameScoresDto> GetScoresAsync(string gameId);
 
     /// <summary>
     /// Gets the current board state.
     /// </summary>
-    Task<Game> GetBoardAsync(string gameId);
+    Task<BoardStateDto> GetBoardAsync(string gameId);
 
     /// <summary>
     /// Passes the current turn.

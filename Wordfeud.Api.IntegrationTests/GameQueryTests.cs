@@ -1,8 +1,10 @@
-using Xunit;
+using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Wordfeud.Api.Models;
-using System.Net.Http.Json;
+using Wordfeud.Api.Serialization;
+using Xunit;
 
 namespace Wordfeud.Api.IntegrationTests;
 
@@ -61,7 +63,12 @@ public class GameQueryTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-        var scores = await TestHelpers.ReadAsGameAsync(response);
+        var json = await response.Content.ReadAsStringAsync();
+        var scores = JsonSerializer.Deserialize<GameScoresDto>(json, new JsonSerializerOptions
+        {
+            Converters = { new BoardConverter() },
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
         scores.Should().NotBeNull();
         scores!.Players.Should().HaveCount(1);
     }
@@ -88,9 +95,14 @@ public class GameQueryTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
-        var board = await TestHelpers.ReadAsGameAsync(response);
+        var json = await response.Content.ReadAsStringAsync();
+        var board = JsonSerializer.Deserialize<BoardStateDto>(json, new JsonSerializerOptions
+        {
+            Converters = { new BoardConverter() },
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        });
         board.Should().NotBeNull();
-        board!.Board.Should().NotBeNull();
+        board!.Tiles.Should().NotBeNull();
     }
 
     [Fact]

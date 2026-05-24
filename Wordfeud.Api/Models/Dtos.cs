@@ -117,3 +117,114 @@ public class TilePlacementDto
     /// </summary>
     public int Column { get; set; }
 }
+
+/// <summary>
+/// Response DTO for game scores.
+/// </summary>
+public class GameScoresDto
+{
+    /// <summary>
+    /// Gets the game ID.
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the game ID.
+    /// </summary>
+    public string GameId => Id;
+
+    /// <summary>
+    /// Gets the game status.
+    /// </summary>
+    public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the list of player scores.
+    /// </summary>
+    public List<PlayerScoreDto> Players { get; set; } = new();
+}
+
+/// <summary>
+/// Response DTO for a player's score.
+/// </summary>
+public class PlayerScoreDto
+{
+    /// <summary>
+    /// Gets the player ID.
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the player name.
+    /// </summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the current score.
+    /// </summary>
+    public int Score { get; set; }
+
+    /// <summary>
+    /// Gets the number of tiles drawn.
+    /// </summary>
+    public int TilesDrawn { get; set; }
+}
+
+/// <summary>
+/// Response DTO for board state.
+/// </summary>
+public class BoardStateDto
+{
+    /// <summary>
+    /// Gets the game ID.
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets the board size.
+    /// </summary>
+    public int Size { get; set; }
+
+    /// <summary>
+    /// Gets the tiles on the board as a list of placed tiles.
+    /// </summary>
+    public List<BoardTileDto> Tiles { get; set; } = new();
+
+    /// <summary>
+    /// Gets the board as a 2D array for backward compatibility.
+    /// Returns null (DTO does not expose 2D array).
+    /// </summary>
+    [Obsolete("Use Tiles property instead.")]
+    public Tile?[,] Board => null!;
+}
+
+/// <summary>
+/// Response DTO for a tile on the board.
+/// </summary>
+public class BoardTileDto
+{
+    /// <summary>
+    /// Gets the row position.
+    /// </summary>
+    public int Row { get; set; }
+
+    /// <summary>
+    /// Gets the column position.
+    /// </summary>
+    public int Column { get; set; }
+
+    /// <summary>
+    /// Gets the letter of the tile.
+    /// </summary>
+    public string Letter { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets whether this is a blank tile.
+    /// </summary>
+    public bool IsBlank { get; set; }
+
+    /// <summary>
+    /// Gets the bonus type for this position.
+    /// </summary>
+    public string BonusType { get; set; } = string.Empty;
+}

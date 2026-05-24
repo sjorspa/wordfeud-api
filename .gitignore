@@ -88,3 +88,23 @@ artifacts/
 .env
 .env.*
 !.env.example
+
+## IDE - JetBrains
+*.iml
+*.iml.bak
+
+## IDE - IntelliJ
+.idea/modules.xml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/inspectionProfiles/
+.idea/libraries/
+
+## .NET Core
+global.json
+*.csproj.user
+
+## Publish
+publish/
+*.pdb
+*.xml

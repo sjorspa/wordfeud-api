@@ -13,7 +13,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.27" />
+    <EmbeddedResource Include="Data\dutch-words.txt">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <LogicalName>Wordfeud.Api.Data.dutch-words.txt</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Openapi" Version="8.0.27" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.6.2" />
   </ItemGroup>

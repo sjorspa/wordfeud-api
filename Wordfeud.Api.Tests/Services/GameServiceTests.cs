@@ -884,8 +884,8 @@ public class GameServiceTests
         // Verify some score was awarded (exact value depends on game logic)
         player1.Score.Should().BeGreaterThan(0);
 
-        // Step 2: Place 'E' vertically above the 'G' at (6,7) which is a Double Letter square
-        // This creates a vertical cross word with G at (7,7)
+        // Step 2: Place 'E' vertically above the 'A' at (6,8) which is a Double Letter square
+        // This creates a vertical cross word with A at (7,8)
         var result2 = await _service.GetGameAsync(game.Id);
         var currentPlayerId = result2!.CurrentPlayerId!;
         var scoreBefore = result2.Players.First(p => p.Id == currentPlayerId).Score;
@@ -895,10 +895,10 @@ public class GameServiceTests
         {
             Tiles = new List<TilePlacementDto>
             {
-                new() { Letter = "E", IsBlank = false, TileId = hand2[0].Id, Row = 6, Column = 7 }
+                new() { Letter = "E", IsBlank = false, TileId = hand2[0].Id, Row = 6, Column = 8 }
             },
             StartRow = 6,
-            StartColumn = 7,
+            StartColumn = 8,
             Direction = 1
         };
 
@@ -1306,7 +1306,7 @@ public class GameServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Id.Should().Be(game.Id);
-        result.Board.Should().NotBeNull();
+        result.Tiles.Should().NotBeNull();
     }
 
     [Fact]
@@ -1326,9 +1326,7 @@ public class GameServiceTests
         var result = await _service.GetBoardAsync(game.Id);
 
         // Assert
-        for (var r = 0; r < 15; r++)
-            for (var c = 0; c < 15; c++)
-                result!.Board[r, c].Should().BeNull();
+        result!.Tiles.Should().BeEmpty();
     }
 
     [Fact]
@@ -1445,8 +1443,8 @@ public class GameServiceTests
         var player1 = placedGame1.Players.First(p => p.Id == player1Id);
         // Get actual placed tile Points from the board state
         var baseScore1 = request1.Tiles.Sum(t => placedGame1.Board.GetTile(t.Row, t.Column)?.Points ?? 0);
-        // KELK: tiles on DW(7,7) double the word score
-        player1.Score.Should().Be(baseScore1 * 2);
+        // KELK: no bonus squares on these positions
+        player1.Score.Should().Be(baseScore1);
 
         // Step 2: Player2 places "Kaars" vertically from center (7,7)-(11,7), sharing K at (7,7)
         var result2 = await _service.GetGameAsync(game.Id);

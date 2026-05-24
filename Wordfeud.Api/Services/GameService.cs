@@ -232,7 +232,7 @@ public class GameService : IGameService
     }
 
     /// <inheritdoc />
-    public Task<Game> GetScoresAsync(string gameId)
+    public Task<GameScoresDto> GetScoresAsync(string gameId)
     {
         Game? game;
         lock (_lock)
@@ -249,11 +249,24 @@ public class GameService : IGameService
             CalculateFinalScores(game);
         }
 
-        return Task.FromResult(game);
+        var dto = new GameScoresDto
+        {
+            Id = game.Id,
+            Status = game.Status.ToString(),
+            Players = game.Players.Select(p => new PlayerScoreDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Score = p.Score,
+                TilesDrawn = p.TilesDrawn
+            }).ToList()
+        };
+
+        return Task.FromResult(dto);
     }
 
     /// <inheritdoc />
-    public Task<Game> GetBoardAsync(string gameId)
+    public Task<BoardStateDto> GetBoardAsync(string gameId)
     {
         Game? game;
         lock (_lock)
@@ -264,7 +277,36 @@ public class GameService : IGameService
         if (game == null)
             throw new KeyNotFoundException($"Game '{gameId}' not found.");
 
-        return Task.FromResult(game);
+        var board = game.Board;
+        var tiles = new List<BoardTileDto>();
+
+        for (var row = 0; row < board.Size; row++)
+        {
+            for (var col = 0; col < board.Size; col++)
+            {
+                var tile = board.GetTile(row, col);
+                if (tile != null)
+                {
+                    tiles.Add(new BoardTileDto
+                    {
+                        Row = row,
+                        Column = col,
+                        Letter = tile.Letter,
+                        IsBlank = tile.IsBlank,
+                        BonusType = Data.BoardConfiguration.GetBonusType(row, col).ToString()
+                    });
+                }
+            }
+        }
+
+        var dto = new BoardStateDto
+        {
+            Id = gameId,
+            Size = board.Size,
+            Tiles = tiles
+        };
+
+        return Task.FromResult(dto);
     }
 
     /// <inheritdoc />
@@ -320,6 +362,8 @@ public class GameService : IGameService
                 throw new UnauthorizedAccessException("It is not your turn.");
 
             var player = game.Players.First(p => p.Id == playerId);
+
+            var tilesToSwap = request.TileIds!.Count;
 
             // Check if player has enough tiles to swap
             if (player.Hand.Count < tilesToSwap)

@@ -212,7 +212,7 @@ public class GamesController : ControllerBase
     /// <param name="id">The game ID.</param>
     /// <returns>The game state with scores.</returns>
     [HttpGet("{id}/scores")]
-    [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(GameScoresDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetScores(string id)
     {
@@ -220,8 +220,8 @@ public class GamesController : ControllerBase
 
         try
         {
-            var game = await _gameService.GetScoresAsync(id);
-            return Ok(game);
+            var scores = await _gameService.GetScoresAsync(id);
+            return Ok(scores);
         }
         catch (KeyNotFoundException)
         {
@@ -240,7 +240,7 @@ public class GamesController : ControllerBase
     /// <param name="id">The game ID.</param>
     /// <returns>The board state.</returns>
     [HttpGet("{id}/board")]
-    [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BoardStateDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetBoard(string id)
     {
@@ -248,8 +248,8 @@ public class GamesController : ControllerBase
 
         try
         {
-            var game = await _gameService.GetBoardAsync(id);
-            return Ok(game);
+            var board = await _gameService.GetBoardAsync(id);
+            return Ok(board);
         }
         catch (KeyNotFoundException)
         {

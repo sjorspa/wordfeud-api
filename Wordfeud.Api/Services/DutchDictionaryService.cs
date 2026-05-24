@@ -1,3 +1,4 @@
+using System.Text;
 using Wordfeud.Api.Interfaces;
 
 namespace Wordfeud.Api.Services;
@@ -55,6 +56,9 @@ public class DutchDictionaryService : IDutchDictionaryService
     public int WordCount => _words.Count;
 
     /// <inheritdoc />
+    public bool IsInitialized => _isInitialized;
+
+    /// <inheritdoc />
     public bool Contains(string word)
     {
         if (!_isInitialized)
@@ -63,7 +67,40 @@ public class DutchDictionaryService : IDutchDictionaryService
             return _fallbackWords.Contains(word);
         }
 
-        return _words.Contains(word);
+        var normalizedWord = NormalizeDiacritics(word);
+        return _words.Contains(normalizedWord);
+    }
+
+    /// <summary>
+    /// Normalizes a word by removing diacritics and special characters.
+    /// Converts characters like ë→e, é→e, à→a, ô→o, etc.
+    /// </summary>
+    /// <param name="word">The word to normalize.</param>
+    /// <returns>A normalized string with diacritics removed.</returns>
+    public static string NormalizeDiacritics(string word)
+    {
+        if (string.IsNullOrEmpty(word))
+            return word;
+
+        var normalized = new StringBuilder();
+        foreach (var c in word)
+        {
+            var normalizedChar = c switch
+            {
+                'é' or 'è' or 'ê' or 'ë' or 'È' or 'É' or 'Ê' or 'Ë' => 'e',
+                'à' or 'á' or 'â' or 'ã' or 'ä' or 'å' or 'À' or 'Á' or 'Â' or 'Ã' or 'Ä' or 'Å' => 'a',
+                'î' or 'ï' or 'Í' or 'Ì' or 'Î' or 'Ï' => 'i',
+                'ó' or 'ò' or 'ô' or 'õ' or 'ö' or 'Ó' or 'Ò' or 'Ô' or 'Õ' or 'Ö' => 'o',
+                'ú' or 'ù' or 'û' or 'ü' or 'Ú' or 'Ù' or 'Û' or 'Ü' => 'u',
+                'ç' or 'Ç' => 'c',
+                'ñ' or 'Ñ' => 'n',
+                'ý' or 'ÿ' or 'Ý' => 'y',
+                _ => c
+            };
+            normalized.Append(normalizedChar);
+        }
+
+        return normalized.ToString();
     }
 
     /// <inheritdoc />
@@ -78,7 +115,10 @@ public class DutchDictionaryService : IDutchDictionaryService
             var embeddedWords = LoadFromEmbeddedResource();
             if (embeddedWords.Any())
             {
-                _words.UnionWith(embeddedWords);
+                foreach (var word in embeddedWords)
+                {
+                    _words.Add(NormalizeDiacritics(word));
+                }
                 _isInitialized = true;
                 _logger.LogInformation("Loaded {Count} words from embedded resource", _words.Count);
                 return;

@@ -21,4 +21,9 @@ public interface IDutchDictionaryService
     /// Gets the number of words currently loaded.
     /// </summary>
     int WordCount { get; }
+
+    /// <summary>
+    /// Gets whether the dictionary has been fully initialized.
+    /// </summary>
+    bool IsInitialized { get; }
 }
