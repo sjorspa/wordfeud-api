@@ -640,13 +640,179 @@ public class EdgeCaseTests : IntegrationTestBase
     #region Health Check
 
     [Fact]
-    public async Task GetHealth_ShouldReturn200()
+    public async Task GetHealth_Live_ShouldReturn200()
     {
         // Act
         var response = await Client.GetAsync("/health/live");
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetHealth_Ready_ShouldReturn200()
+    {
+        // Act
+        var response = await Client.GetAsync("/health/ready");
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task GetHealth_Live_ShouldReturnHealthPayload()
+    {
+        // Act
+        var response = await Client.GetAsync("/health/live");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+        content.Should().Contain("alive");
+        content.Should().Contain("timestamp");
+    }
+
+    [Fact]
+    public async Task GetHealth_Ready_ShouldReturnHealthPayload()
+    {
+        // Act
+        var response = await Client.GetAsync("/health/ready");
+        var content = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
+        content.Should().Contain("ready");
+        content.Should().Contain("timestamp");
+    }
+
+    #endregion
+
+    #region Validation Error Tests
+
+    [Fact]
+    public async Task PostCreateGame_ShouldReturn400WhenPlayerNameEmpty()
+    {
+        // Act
+        var response = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "" });
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PostCreateGame_ShouldReturn400WhenPlayerNameMissing()
+    {
+        // Act
+        var response = await Client.PostAsJsonAsync("/api/games", new { });
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PostJoinGame_ShouldReturn400WhenPlayerNameEmpty()
+    {
+        // Arrange
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var game = await TestHelpers.ReadAsGameAsync(createResponse);
+
+        // Act
+        var response = await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "" });
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PostJoinGame_ShouldReturn404WhenGameNotFound()
+    {
+        // Act
+        var response = await Client.PostAsJsonAsync("/api/games/nonexistent-id/join", new { PlayerName = "Player2" });
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetScores_ShouldReturn404WhenGameNotFound()
+    {
+        // Act
+        var response = await Client.GetAsync("/api/games/nonexistent-id/scores");
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetBoard_ShouldReturn404WhenGameNotFound()
+    {
+        // Act
+        var response = await Client.GetAsync("/api/games/nonexistent-id/board");
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetMoveHistory_ShouldReturn404WhenGameNotFound()
+    {
+        // Act
+        var response = await Client.GetAsync("/api/games/nonexistent-id/moves");
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task PostPlaceTiles_ShouldReturn404WhenGameNotFound()
+    {
+        // Arrange
+        var placeRequest = new
+        {
+            tiles = new[]
+            {
+                new
+                {
+                    letter = "A",
+                    isBlank = false,
+                    tileId = "tile-id",
+                    row = 7,
+                    column = 7
+                }
+            },
+            startRow = 7,
+            startColumn = 7,
+            direction = 0
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/api/games/nonexistent-id/place?playerId=player-id", placeRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task PostPassTurn_ShouldReturn404WhenGameNotFound()
+    {
+        // Act
+        var response = await Client.PostAsJsonAsync("/api/games/nonexistent-id/pass?playerId=player-id", new { });
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task PostSwapTiles_ShouldReturn404WhenGameNotFound()
+    {
+        // Arrange
+        var swapRequest = new { tileIds = new[] { "tile-id" } };
+
+        // Act
+        var response = await Client.PostAsJsonAsync("/api/games/nonexistent-id/swap?playerId=player-id", swapRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
     }
 
     #endregion

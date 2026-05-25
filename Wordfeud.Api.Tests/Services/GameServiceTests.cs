@@ -922,23 +922,24 @@ public class GameServiceTests
         var playerId = result!.CurrentPlayerId!;
         var hand = result.Players.First(p => p.Id == playerId).Hand;
 
-        // Step 1: Place "GA" horizontally starting at center (7,7) which is Double Word
+        // Step 1: Place "DE" horizontally starting at (7,6)-(7,7)
+        // E lands on center (7,7) which is Double Word
         var request1 = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>
             {
-                new() { Letter = "G", IsBlank = false, TileId = hand[0].Id, Row = 7, Column = 7 },
-                new() { Letter = "A", IsBlank = false, TileId = hand[1].Id, Row = 7, Column = 8 }
+                new() { Letter = "D", IsBlank = false, TileId = hand[0].Id, Row = 7, Column = 6 },
+                new() { Letter = "E", IsBlank = false, TileId = hand[1].Id, Row = 7, Column = 7 }
             },
             StartRow = 7,
-            StartColumn = 7,
+            StartColumn = 6,
             Direction = 0
         };
 
         await _service.PlaceTilesAsync(game.Id, playerId, request1);
 
-        // Step 2: Place 'E' vertically above 'G' at (6,7) which is a Double Letter square
-        // This creates a cross word extending through G
+        // Step 2: Place "AN" vertically crossing through E at (7,7)
+        // A at (5,7), N at (6,7) - main word "AN", cross word "DE"
         var result2 = await _service.GetGameAsync(game.Id);
         var currentPlayerId = result2!.CurrentPlayerId!;
         var hand2 = result2.Players.First(p => p.Id == currentPlayerId).Hand;
@@ -947,9 +948,10 @@ public class GameServiceTests
         {
             Tiles = new List<TilePlacementDto>
             {
-                new() { Letter = "E", IsBlank = false, TileId = hand2[0].Id, Row = 6, Column = 7 }
+                new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 5, Column = 7 },
+                new() { Letter = "N", IsBlank = false, TileId = hand2[1].Id, Row = 6, Column = 7 }
             },
-            StartRow = 6,
+            StartRow = 5,
             StartColumn = 7,
             Direction = 1
         };
@@ -959,7 +961,7 @@ public class GameServiceTests
         var player = placedGame.Players.First(p => p.Id == currentPlayerId);
 
         // Verify scoring includes cross words - score should be positive and reflect
-        // both the main word (vertical "EG") and the cross word (horizontal "GA")
+        // both the main word (vertical "AN") and the cross word (horizontal "DE")
         player.Score.Should().BeGreaterThan(0);
     }
 
