@@ -184,7 +184,11 @@ public class GamesController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized tile placement in game {GameId}", id);
-            return Forbid(ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {
@@ -295,7 +299,11 @@ public class GamesController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized pass in game {GameId}", id);
-            return Forbid(ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {
@@ -352,7 +360,11 @@ public class GamesController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             _logger.LogWarning(ex, "Unauthorized swap in game {GameId}", id);
-            return Forbid(ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ProblemDetails
+            {
+                Title = "Forbidden",
+                Detail = ex.Message
+            });
         }
         catch (InvalidOperationException ex)
         {

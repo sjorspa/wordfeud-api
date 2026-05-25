@@ -435,7 +435,7 @@ public class GameServiceTests
 
         // Act & Assert
         var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, playerId, request));
-        ex.Message.ShouldContain("Blank tile must have a letter");
+        ex.Message.ShouldContain("Blank tile must have a single letter");
     }
 
     [Fact]

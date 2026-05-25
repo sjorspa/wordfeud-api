@@ -52,6 +52,11 @@ public class MoveHistory
 public class MoveTileDto
 {
     /// <summary>
+    /// The unique identifier of the tile.
+    /// </summary>
+    public string TileId { get; set; } = string.Empty;
+
+    /// <summary>
     /// The letter of the tile.
     /// </summary>
     public string Letter { get; set; } = string.Empty;

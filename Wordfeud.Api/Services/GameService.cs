@@ -169,8 +169,21 @@ public class GameService : IGameService
             // Validate blank assignments
             foreach (var tileDto in request.Tiles.Where(t => t.IsBlank))
             {
-                if (string.IsNullOrEmpty(tileDto.Letter))
-                    throw new ArgumentException("Blank tile must have a letter assigned.");
+                if (string.IsNullOrEmpty(tileDto.Letter) || tileDto.Letter.Length != 1 || !char.IsLetter(tileDto.Letter[0]))
+                    throw new ArgumentException("Blank tile must have a single letter assigned.");
+            }
+
+            // Validate BlankAssignments dictionary keys match tile IDs
+            if (request.BlankAssignments != null)
+            {
+                var tileIds = request.Tiles.Where(t => t.IsBlank).Select(t => t.TileId).ToHashSet();
+                foreach (var kvp in request.BlankAssignments)
+                {
+                    if (!tileIds.Contains(kvp.Key))
+                        throw new ArgumentException($"Blank assignment key '{kvp.Key}' does not match any placed tile.");
+                    if (kvp.Value.Length != 1 || !char.IsLetter(kvp.Value[0]))
+                        throw new ArgumentException($"Blank assignment for tile '{kvp.Key}' must be a single letter.");
+                }
             }
 
             // Apply blank assignments to the tiles in hand
@@ -236,6 +249,7 @@ public class GameService : IGameService
                 Score = scoreResult.TotalScore,
                 Tiles = request.Tiles.Select(t => new MoveTileDto
                 {
+                    TileId = t.TileId,
                     Letter = t.Letter,
                     Row = t.Row,
                     Column = t.Column
@@ -447,6 +461,7 @@ public class GameService : IGameService
                 Score = 0,
                 Tiles = request.TileIds.Select(id => new MoveTileDto
                 {
+                    TileId = id,
                     Letter = "swap",
                     Row = 0,
                     Column = 0
