@@ -9,14 +9,8 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for edge cases and validation scenarios.
 /// </summary>
-public class EdgeCaseTests : IntegrationTestBase, IDisposable
+public class EdgeCaseTests : IntegrationTestBase
 {
-    private readonly HttpClient _client;
-
-    public EdgeCaseTests(WebApplicationFactory<Program> factory)
-    {
-        _client = factory.CreateClient();
-    }
 
     #region Tile Placement Edge Cases
 
@@ -24,10 +18,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenPlacingZeroTiles()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
         var currentPlayerId = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId).Id;
 
@@ -40,7 +34,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -50,15 +44,15 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenPlacingOnOccupiedSquare()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
-        var player1 = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
-        var player1Id = player1.Id;
-        var firstTile = player1.Hand[0];
+        var currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+        var currentPlayerId = currentPlayer.Id;
+        var firstTile = currentPlayer.Hand[0];
 
         var placeRequest1 = new
         {
@@ -79,17 +73,24 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Place first tile
-        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player1Id}", placeRequest1);
+        await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest1);
 
-        // Switch turn to player 2
-        var passResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={player1Id}", new { });
+        // Re-read game state to get the new current player after turn switch
+        gameState = await Client.GetAsync($"/api/games/{game.Id}");
+        currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        var nextPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+        var nextPlayerId = nextPlayer.Id;
+
+        // Switch turn to next player by passing
+        var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={nextPlayerId}", new { });
         passResponse.EnsureSuccessStatusCode();
 
-        gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        // Re-read game state to get the player who should place next
+        gameState = await Client.GetAsync($"/api/games/{game.Id}");
         currentGame = await TestHelpers.ReadAsGameAsync(gameState);
-        var player2 = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
-        var player2Id = player2.Id;
-        var player2Tile = player2.Hand[0];
+        var placingPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+        var placingPlayerId = placingPlayer.Id;
+        var placingPlayerTile = placingPlayer.Hand[0];
 
         var placeRequest2 = new
         {
@@ -97,9 +98,9 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
             {
                 new
                 {
-                    letter = player2Tile.Letter,
-                    isBlank = player2Tile.IsBlank,
-                    tileId = player2Tile.Id,
+                    letter = placingPlayerTile.Letter,
+                    isBlank = placingPlayerTile.IsBlank,
+                    tileId = placingPlayerTile.Id,
                     row = 7,
                     column = 7
                 }
@@ -110,7 +111,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player2Id}", placeRequest2);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={placingPlayerId}", placeRequest2);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -120,15 +121,15 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenNotConnectingToExistingTiles()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
-        var player1 = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
-        var player1Id = player1.Id;
-        var player1Tile = player1.Hand[0];
+        var currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+        var currentPlayerId = currentPlayer.Id;
+        var currentPlayerTile = currentPlayer.Hand[0];
 
         // Place first tile at center (7,7)
         var placeRequest1 = new
@@ -137,9 +138,9 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
             {
                 new
                 {
-                    letter = player1Tile.Letter,
-                    isBlank = player1Tile.IsBlank,
-                    tileId = player1Tile.Id,
+                    letter = currentPlayerTile.Letter,
+                    isBlank = currentPlayerTile.IsBlank,
+                    tileId = currentPlayerTile.Id,
                     row = 7,
                     column = 7
                 }
@@ -149,17 +150,24 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
             direction = 0
         };
 
-        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player1Id}", placeRequest1);
+        await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest1);
 
-        // Pass turn to player 2
-        var passResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={player1Id}", new { });
+        // Re-read game state to get the new current player after turn switch
+        gameState = await Client.GetAsync($"/api/games/{game.Id}");
+        currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        var nextPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+        var nextPlayerId = nextPlayer.Id;
+
+        // Pass turn to next player
+        var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={nextPlayerId}", new { });
         passResponse.EnsureSuccessStatusCode();
 
-        gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        // Re-read game state to get the player who should place next
+        gameState = await Client.GetAsync($"/api/games/{game.Id}");
         currentGame = await TestHelpers.ReadAsGameAsync(gameState);
-        var player2 = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
-        var player2Id = player2.Id;
-        var player2Tile = player2.Hand[0];
+        var placingPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+        var placingPlayerId = placingPlayer.Id;
+        var placingPlayerTile = placingPlayer.Hand[0];
 
         // Try to place tiles far from existing tiles (not connected)
         var placeRequest2 = new
@@ -168,9 +176,9 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
             {
                 new
                 {
-                    letter = player2Tile.Letter,
-                    isBlank = player2Tile.IsBlank,
-                    tileId = player2Tile.Id,
+                    letter = placingPlayerTile.Letter,
+                    isBlank = placingPlayerTile.IsBlank,
+                    tileId = placingPlayerTile.Id,
                     row = 0,
                     column = 0
                 }
@@ -181,7 +189,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player2Id}", placeRequest2);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={placingPlayerId}", placeRequest2);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -191,10 +199,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenTilesNotInLine()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -213,7 +221,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -223,10 +231,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenTilesHaveGaps()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -245,7 +253,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -255,10 +263,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenFirstMoveNotOnCenter()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -276,7 +284,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -286,10 +294,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenNotPlayerTurn()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -307,7 +315,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act - try to place tiles as the non-current player
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={otherPlayer.Id}", placeRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={otherPlayer.Id}", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
@@ -317,10 +325,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPlaceTiles_ShouldReturn400WhenInvalidDirection()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -338,7 +346,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={playerId}", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -352,10 +360,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostSwapTiles_ShouldReturn400WhenNotEnoughTilesInBag()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -376,7 +384,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={playerId}", swapRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={playerId}", swapRequest);
 
         // Assert - should succeed since there are >= 7 tiles in bag
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -386,10 +394,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostSwapTiles_ShouldReturn400WhenPlayerNotTurn()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var otherPlayer = currentGame!.Players.First(p => p.Id != currentGame.CurrentPlayerId);
@@ -400,7 +408,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={otherPlayer.Id}", swapRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={otherPlayer.Id}", swapRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
@@ -410,10 +418,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostSwapTiles_ShouldReturn400WhenTileNotInHand()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -421,11 +429,11 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
 
         var swapRequest = new
         {
-            tileIds = new[] { Guid.NewGuid().ToString() }
+            tileIds = new[] { "nonexistent-tile-id-0000-0000-0000-000000000000" }
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={playerId}", swapRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={playerId}", swapRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -435,10 +443,10 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostSwapTiles_ShouldReturn400WhenSwappingZeroTiles()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
@@ -450,7 +458,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={playerId}", swapRequest);
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={playerId}", swapRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -463,29 +471,68 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     [Fact]
     public async Task PostPlaceTiles_ShouldReturn400WhenGameFinished()
     {
-        // Arrange: Create a game, fill the board with tiles until game ends
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        // Arrange: Create a finished game by simulating game completion
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
 
-        // Simulate a finished game by manipulating state through the API
-        // We'll test the game finished scenario by checking the game status
-        var gameState = await _client.GetAsync($"/api/games/{game!.Id}");
+        // Finish the game with three consecutive passes (must pass with current player each time)
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        var currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
 
-        // Assert game is not finished initially
-        currentGame!.Status.Should().NotBe(Wordfeud.Api.Models.GameStatus.Finished);
+        for (int i = 0; i < 3; i++)
+        {
+            // Re-read game state to get the current player for this pass
+            gameState = await Client.GetAsync($"/api/games/{game.Id}");
+            currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+            currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+
+            var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={currentPlayer.Id}", new { });
+            passResponse.EnsureSuccessStatusCode();
+        }
+
+        // Verify game is now finished
+        gameState = await Client.GetAsync($"/api/games/{game.Id}");
+        currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        currentGame!.Status.Should().Be(Wordfeud.Api.Models.GameStatus.Finished);
+
+        // Now try to place tiles in a finished game
+        var placeRequest = new
+        {
+            tiles = new[]
+            {
+                new
+                {
+                    letter = "A",
+                    isBlank = false,
+                    tileId = "dummy-tile-id",
+                    row = 7,
+                    column = 7
+                }
+            },
+            startRow = 7,
+            startColumn = 7,
+            direction = 0
+        };
+
+        // Act
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayer.Id}", placeRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
     }
 
     [Fact]
     public async Task PostJoinGame_ShouldReturn400WhenGameFull()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
 
         // Act - try to join again
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/join", new { PlayerName = "Player3" });
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/join", new { PlayerName = "Player3" });
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -494,9 +541,34 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     [Fact]
     public async Task PostJoinGame_ShouldReturn400WhenGameAlreadyFinished()
     {
-        // Arrange - use a non-existent game (simulates trying to join a finished/missing game)
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/join", new { PlayerName = "Player1" });
+        // Arrange: Create a finished game
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var game = await TestHelpers.ReadAsGameAsync(createResponse);
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+
+        // Finish the game with three consecutive passes
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
+        var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        var currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+
+        for (int i = 0; i < 3; i++)
+        {
+            // Re-read game state to get the current player for this pass
+            gameState = await Client.GetAsync($"/api/games/{game.Id}");
+            currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+            currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+
+            var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={currentPlayer.Id}", new { });
+            passResponse.EnsureSuccessStatusCode();
+        }
+
+        // Verify game is finished
+        gameState = await Client.GetAsync($"/api/games/{game.Id}");
+        currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        currentGame!.Status.Should().Be(Wordfeud.Api.Models.GameStatus.Finished);
+
+        // Act: Try to join a finished game
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/join", new { PlayerName = "Player3" });
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -506,7 +578,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task GetGame_ShouldReturn404WhenGameNotFound()
     {
         // Act
-        var response = await _client.GetAsync("/api/games/nonexistent-id");
+        var response = await Client.GetAsync("/api/games/nonexistent-id");
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
@@ -520,16 +592,16 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task PostPassTurn_ShouldReturn400WhenNotPlayerTurn()
     {
         // Arrange
-        var createResponse = await _client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
         var game = await TestHelpers.ReadAsGameAsync(createResponse);
-        await _client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
-        var gameState = await _client.GetAsync($"/api/games/{game.Id}");
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var otherPlayer = currentGame!.Players.First(p => p.Id != currentGame.CurrentPlayerId);
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={otherPlayer.Id}", new { });
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={otherPlayer.Id}", new { });
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Forbidden);
@@ -538,9 +610,26 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     [Fact]
     public async Task PostPassTurn_ShouldReturn400WhenGameFinished()
     {
-        // Arrange - use a non-existent game
-        // Act
-        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/pass?playerId=dummy", new { });
+        // Arrange: Create a finished game
+        var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
+        var game = await TestHelpers.ReadAsGameAsync(createResponse);
+        await Client.PostAsJsonAsync($"/api/games/{game!.Id}/join", new { PlayerName = "Player2" });
+
+        // Finish the game with three consecutive passes
+        var gameState = await Client.GetAsync($"/api/games/{game.Id}");
+        var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+        var currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+
+        for (int i = 0; i < 3; i++)
+        {
+            gameState = await Client.GetAsync($"/api/games/{game.Id}");
+            currentGame = await TestHelpers.ReadAsGameAsync(gameState);
+            currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
+            await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={currentPlayer.Id}", new { });
+        }
+
+        // Act: Try to pass in a finished game
+        var response = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={currentPlayer.Id}", new { });
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -554,7 +643,7 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
     public async Task GetHealth_ShouldReturn200()
     {
         // Act
-        var response = await _client.GetAsync("/health");
+        var response = await Client.GetAsync("/health/live");
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -562,8 +651,4 @@ public class EdgeCaseTests : IntegrationTestBase, IDisposable
 
     #endregion
 
-    public void Dispose()
-    {
-        // No resources to dispose
-    }
 }

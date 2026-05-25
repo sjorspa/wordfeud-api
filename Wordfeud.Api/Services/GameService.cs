@@ -423,15 +423,28 @@ public class GameService : IGameService
                 throw new InvalidOperationException(
                     $"Cannot swap tiles. At least 7 tiles must remain in the bag. Available: {game.TileBag.Count}");
 
+            // Validate all tile IDs are in the player's hand
+            var missingTiles = new List<string>();
+            foreach (var tileId in request.TileIds!)
+            {
+                if (!player.Hand.Any(t => t.Id == tileId))
+                {
+                    missingTiles.Add(tileId);
+                }
+            }
+
+            if (missingTiles.Count > 0)
+            {
+                throw new ArgumentException(
+                    $"The following tiles are not in your hand: {string.Join(", ", missingTiles)}");
+            }
+
             // Remove tiles from hand and return to bag
             foreach (var tileId in request.TileIds!)
             {
-                var tile = player.Hand.FirstOrDefault(t => t.Id == tileId);
-                if (tile != null)
-                {
-                    player.Hand.Remove(tile);
-                    game.TileBag.Add(tile);
-                }
+                var tile = player.Hand.First(t => t.Id == tileId);
+                player.Hand.Remove(tile);
+                game.TileBag.Add(tile);
             }
 
             // Shuffle the returned tiles back in
@@ -532,6 +545,12 @@ public class GameService : IGameService
             {
                 return (false, "At least one tile must connect to existing tiles.");
             }
+        }
+
+        // Validate direction is horizontal (0) or vertical (1)
+        if (request.Direction != 0 && request.Direction != 1)
+        {
+            return (false, "Direction must be 0 (horizontal) or 1 (vertical).");
         }
 
         // Check tiles are in a line (horizontal or vertical)
