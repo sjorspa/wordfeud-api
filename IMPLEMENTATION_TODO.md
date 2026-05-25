@@ -1,7 +1,7 @@
 # Wordfeud API - Unimplemented Items & TODOs
 
-> Last updated: 2026-05-24
-> All tests passing: 112/112 (85 unit + 27 integration)
+> Last updated: 2026-05-25
+> All tests passing: 119/119 (92 unit + 27 integration)
 
 ---
 
@@ -29,6 +29,18 @@ Every item listed below has been implemented, tested, and verified. No outstandi
 - Updated to official Dutch distribution: N=11 tiles, R=2pts, I=2pts, U=2pts, Z=5pts
 - Total tiles: 104 (matching official Dutch distribution)
 - Verified: A=1pt x7, B=4pt x2, C=5pt x2, D=2pt x5, E=1pt x18, F=4pt x2, G=3pt x3, H=4pt x2, I=2pt x4, J=4pt x2, K=3pt x3, L=3pt x3, M=3pt x3, N=1pt x11, O=1pt x6, P=4pt x2, Q=10pt x1, R=2pt x5, S=2pt x5, T=2pt x5, U=2pt x3, V=4pt x2, W=5pt x2, X=8pt x1, Y=8pt x1, Z=5pt x2, Blank=0pt x2
+
+### BUG-08: Tile placement test positions overlap existing tiles - FIXED
+- **KelkKaarsHels**: Lamp was placed at (11,4)-(11,7), overlapping Kaars at (11,7). Moved to (11,3)-(11,6).
+- **BoomGrootSchoon**: Groot was placed at (5,7)-(9,7), overlapping Boom at (7,7). Moved to (8,8)-(12,8).
+- **KatHondVogel**: Hond was placed at (4,7)-(7,7), overlapping Kat at (7,7). Moved to (3,7)-(6,7).
+- **WaterVuurAardeLucht**: Vuur was at (5,7)-(8,7) overlapping Water at (7,7); Lucht was at (9,9)-(13,9) overlapping Aarde at (12,9). Moved Vuur to (3,7)-(6,7), Lucht to (9,10)-(13,10).
+
+### BUG-09: Swap rule not enforcing minimum bag size - FIXED
+- Swap rule now enforces >=7 tiles remaining in bag (official Wordfeud rule)
+- Previously checked if bag had enough tiles for the swap count, which was wrong
+
+---
 
 ## 2. Features Implemented
 
@@ -73,21 +85,49 @@ Every item listed below has been implemented, tested, and verified. No outstandi
 - Added 6 tests in `Wordfeud.Api.Tests/Serialization/BoardConverterTests.cs`
 - Covers: tiles, blank tiles, empty board, null token, all edges, mixed tiles
 
-## 3. Test Count
-
-| Category | Count |
-|----------|-------|
-| Unit tests | 85 |
-| Integration tests | 27 |
-| **Total** | **112** |
+### FEATURE-NEW-01: Health check endpoint - DONE
+- Added `HealthController.cs` with GET `/health` endpoint
+- Returns 200 OK with status JSON for container orchestration
 
 ---
 
-## 4. Summary
+## 3. Scoring Logic Notes
+
+### Letter bonuses on crossing tiles apply to ALL words
+- When a tile is placed on a letter bonus square, its doubled/tripled value applies to ALL words that cross through that tile (not just the primary word being scored)
+- This is the correct Wordfeud rule: letter multipliers are applied before word multipliers
+
+---
+
+## 4. Deferred / Future Work
+
+### JSON Serialization (Deferred)
+- BoardConverter serialization/deserialization exists but full serialization round-trip testing is deferred
+- BoardConverterTests covers basic serialization but not full game state serialization
+- Priority: low - not blocking core game logic
+
+### End-Game Rule: Remaining Tile Value Subtraction
+- Official Wordfeud rule: when a player finishes, remaining tile values are subtracted from each player's score
+- Finisher gets opponent's remaining tile values added to their score
+- Implementation status: needs verification/test coverage
+
+---
+
+## 5. Test Count
+
+| Category | Count |
+|----------|-------|
+| Unit tests | 92 |
+| Integration tests | 27 |
+| **Total** | **119** |
+
+---
+
+## 6. Summary
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Bugs fixed | 5 | All resolved |
+| Bugs fixed | 7 | All resolved |
 | Features implemented | 10 | All resolved |
-| Tests added | 21 | All passing |
-| **Total items** | **36** | **All done** |
+| Tests added | 28 | All passing |
+| **Total items** | **45** | **All done** |
