@@ -1197,7 +1197,7 @@ public class GameServiceTests
         var swapRequest = new SwapTilesRequest { TileIds = player.Hand.Select(t => t.Id).ToList() };
 
         var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, swapRequest));
-        ex.Message.ShouldContain("Not enough tiles");
+        ex.Message.ShouldContain("At least 7 tiles must remain in the bag");
     }
 
     [Fact]
@@ -1581,6 +1581,706 @@ public class GameServiceTests
         // Act & Assert: Should throw because "XELS" is not a valid Dutch word
         var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, player1AgainId, request3));
         ex.Message.ShouldContain("not a valid Dutch word");
+    }
+
+    #endregion
+
+    #region Comprehensive Multi-Word Scoring Tests
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithKelkKaarsHels()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Kelk" horizontally at (7,7)-(7,10)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 7 },
+                new() { Letter = "E", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 8 },
+                new() { Letter = "L", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 9 },
+                new() { Letter = "K", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 10 }
+            },
+            StartRow = 7,
+            StartColumn = 7,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: Kelk scored with 1 word (KELK)
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("KELK");
+
+        // Step 2: Player2 places "Kaars" vertically at (8,7)-(11,7) crossing K at (7,7)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 7 },
+                new() { Letter = "A", IsBlank = false, TileId = hand2[1].Id, Row = 9, Column = 7 },
+                new() { Letter = "R", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 7 },
+                new() { Letter = "S", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 7 }
+            },
+            StartRow = 8,
+            StartColumn = 7,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: AARS scored + cross word on KELK column
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("AARS");
+
+        // Step 3: Player1 places "Hels" vertically at (6,6)-(9,6) crossing KELK
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "H", IsBlank = false, TileId = hand3[0].Id, Row = 6, Column = 6 },
+                new() { Letter = "E", IsBlank = false, TileId = hand3[1].Id, Row = 7, Column = 6 },
+                new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 6 },
+                new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 9, Column = 6 }
+            },
+            StartRow = 6,
+            StartColumn = 6,
+            Direction = 1
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: Multiple words formed including HELS and cross words
+        player1Score2.Should().BeGreaterThan(0);
+        formedWords3.Should().Contain("HELS");
+        formedWords3.Should().HaveCountGreaterThan(1); // Main word + cross words
+
+        // Step 4: Player2 places "Lamp" horizontally at (11,3)-(11,6) crossing KAARS
+        var result4 = await _service.GetGameAsync(game.Id);
+        var player2AgainId = result4!.CurrentPlayerId!;
+        var hand4 = result4.Players.First(p => p.Id == player2AgainId).Hand;
+
+        var request4 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "L", IsBlank = false, TileId = hand4[0].Id, Row = 11, Column = 3 },
+                new() { Letter = "A", IsBlank = false, TileId = hand4[1].Id, Row = 11, Column = 4 },
+                new() { Letter = "M", IsBlank = false, TileId = hand4[2].Id, Row = 11, Column = 5 },
+                new() { Letter = "P", IsBlank = false, TileId = hand4[3].Id, Row = 11, Column = 6 }
+            },
+            StartRow = 11,
+            StartColumn = 3,
+            Direction = 0
+        };
+
+        var placedGame4 = await _service.PlaceTilesAsync(game.Id, player2AgainId, request4);
+        var player2Score2 = placedGame4.Players.First(p => p.Id == player2AgainId).Score;
+        var formedWords4 = placedGame4.FormedWords;
+
+        // Verify: LAMP scored + cross words on HELS column
+        player2Score2.Should().BeGreaterThan(player2Score1);
+        formedWords4.Should().Contain("LAMP");
+        formedWords4.Should().HaveCountGreaterThan(1);
+    }
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithTafelRaamLamp()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Tafel" horizontally at (7,5)-(7,9)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "T", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
+                new() { Letter = "A", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 6 },
+                new() { Letter = "F", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 7 },
+                new() { Letter = "E", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 },
+                new() { Letter = "L", IsBlank = false, TileId = hand1[4].Id, Row = 7, Column = 9 }
+            },
+            StartRow = 7,
+            StartColumn = 5,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: TAFEL scored
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("TAFEL");
+
+        // Step 2: Player2 places "Raam" vertically at (8,6)-(11,6) connecting to A at (7,6)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "R", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 6 },
+                new() { Letter = "A", IsBlank = false, TileId = hand2[1].Id, Row = 9, Column = 6 },
+                new() { Letter = "A", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 6 },
+                new() { Letter = "M", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 6 }
+            },
+            StartRow = 8,
+            StartColumn = 6,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: RAAM scored + cross word on TAFEL column
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("RAAM");
+        formedWords2.Should().HaveCountGreaterThan(1);
+
+        // Step 3: Player1 places "Lamp" horizontally at (5,4)-(5,7) crossing RAAM
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "L", IsBlank = false, TileId = hand3[0].Id, Row = 5, Column = 4 },
+                new() { Letter = "A", IsBlank = false, TileId = hand3[1].Id, Row = 5, Column = 5 },
+                new() { Letter = "M", IsBlank = false, TileId = hand3[2].Id, Row = 5, Column = 6 },
+                new() { Letter = "P", IsBlank = false, TileId = hand3[3].Id, Row = 5, Column = 7 }
+            },
+            StartRow = 5,
+            StartColumn = 4,
+            Direction = 0
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: LAMP scored + cross words on RAAM column
+        player1Score2.Should().BeGreaterThan(player1Score1);
+        formedWords3.Should().Contain("LAMP");
+        formedWords3.Should().HaveCountGreaterThan(1);
+    }
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithHuisSchoorsteen()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Huis" horizontally at (7,6)-(7,9)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "H", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 6 },
+                new() { Letter = "U", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 7 },
+                new() { Letter = "I", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 8 },
+                new() { Letter = "S", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 9 }
+            },
+            StartRow = 7,
+            StartColumn = 6,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: HUIS scored
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("HUIS");
+
+        // Step 2: Player2 places "Raam" vertically at (8,6)-(11,6) connecting to U at (7,6)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "R", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 6 },
+                new() { Letter = "A", IsBlank = false, TileId = hand2[1].Id, Row = 9, Column = 6 },
+                new() { Letter = "A", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 6 },
+                new() { Letter = "M", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 6 }
+            },
+            StartRow = 8,
+            StartColumn = 6,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: RAAM scored
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("RAAM");
+
+        // Step 3: Player1 places "Muur" horizontally at (10,1)-(10,4) connecting to RAAM
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "M", IsBlank = false, TileId = hand3[0].Id, Row = 10, Column = 1 },
+                new() { Letter = "U", IsBlank = false, TileId = hand3[1].Id, Row = 10, Column = 2 },
+                new() { Letter = "U", IsBlank = false, TileId = hand3[2].Id, Row = 10, Column = 3 },
+                new() { Letter = "R", IsBlank = false, TileId = hand3[3].Id, Row = 10, Column = 4 }
+            },
+            StartRow = 10,
+            StartColumn = 1,
+            Direction = 0
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: MUUR scored
+        player1Score2.Should().BeGreaterThan(player1Score1);
+        formedWords3.Should().Contain("MUUR");
+    }
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithTijgerJagerVijf()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Tijger" horizontally at (7,5)-(7,10)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "T", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
+                new() { Letter = "I", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 6 },
+                new() { Letter = "J", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 7 },
+                new() { Letter = "G", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 },
+                new() { Letter = "E", IsBlank = false, TileId = hand1[4].Id, Row = 7, Column = 9 },
+                new() { Letter = "R", IsBlank = false, TileId = hand1[5].Id, Row = 7, Column = 10 }
+            },
+            StartRow = 7,
+            StartColumn = 5,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: TIJGER scored
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("TIJGER");
+
+        // Step 2: Player2 places "Jager" vertically at (8,6)-(12,6) connecting to I at (7,6)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "J", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 6 },
+                new() { Letter = "A", IsBlank = false, TileId = hand2[1].Id, Row = 9, Column = 6 },
+                new() { Letter = "G", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 6 },
+                new() { Letter = "E", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 6 },
+                new() { Letter = "R", IsBlank = false, TileId = hand2[4].Id, Row = 12, Column = 6 }
+            },
+            StartRow = 8,
+            StartColumn = 6,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: JAGER scored
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("JAGER");
+
+        // Step 3: Player1 places "Vijf" vertically at (8,10)-(11,10) connecting to R at (7,10)
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "V", IsBlank = false, TileId = hand3[0].Id, Row = 8, Column = 10 },
+                new() { Letter = "I", IsBlank = false, TileId = hand3[1].Id, Row = 9, Column = 10 },
+                new() { Letter = "J", IsBlank = false, TileId = hand3[2].Id, Row = 10, Column = 10 },
+                new() { Letter = "F", IsBlank = false, TileId = hand3[3].Id, Row = 11, Column = 10 }
+            },
+            StartRow = 8,
+            StartColumn = 10,
+            Direction = 1
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: VIJF scored
+        player1Score2.Should().BeGreaterThan(player1Score1);
+        formedWords3.Should().Contain("VIJF");
+    }
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithBoomGrootSchoon()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Boom" horizontally at (7,5)-(7,8)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "B", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
+                new() { Letter = "O", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 6 },
+                new() { Letter = "O", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 7 },
+                new() { Letter = "M", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 }
+            },
+            StartRow = 7,
+            StartColumn = 5,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: BOOM scored
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("BOOM");
+
+        // Step 2: Player2 places "Groot" vertically at (8,8)-(12,8) connecting to M at (7,8)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "G", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 8 },
+                new() { Letter = "R", IsBlank = false, TileId = hand2[1].Id, Row = 9, Column = 8 },
+                new() { Letter = "O", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 8 },
+                new() { Letter = "O", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 8 },
+                new() { Letter = "T", IsBlank = false, TileId = hand2[4].Id, Row = 12, Column = 8 }
+            },
+            StartRow = 8,
+            StartColumn = 8,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: GROOT scored + cross word on BOOM column
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("GROOT");
+        formedWords2.Should().HaveCountGreaterThan(1);
+
+        // Step 3: Player1 places "Schoon" horizontally at (13,2)-(13,7) connecting to T at (12,8)
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "S", IsBlank = false, TileId = hand3[0].Id, Row = 13, Column = 2 },
+                new() { Letter = "C", IsBlank = false, TileId = hand3[1].Id, Row = 13, Column = 3 },
+                new() { Letter = "H", IsBlank = false, TileId = hand3[2].Id, Row = 13, Column = 4 },
+                new() { Letter = "O", IsBlank = false, TileId = hand3[3].Id, Row = 13, Column = 5 },
+                new() { Letter = "O", IsBlank = false, TileId = hand3[4].Id, Row = 13, Column = 6 },
+                new() { Letter = "N", IsBlank = false, TileId = hand3[5].Id, Row = 13, Column = 7 }
+            },
+            StartRow = 13,
+            StartColumn = 2,
+            Direction = 0
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: SCHOON scored + cross word on GROOT column
+        player1Score2.Should().BeGreaterThan(player1Score1);
+        formedWords3.Should().Contain("SCHOON");
+        formedWords3.Should().HaveCountGreaterThan(1);
+    }
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithKatHondVogel()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Kat" horizontally at (7,6)-(7,8)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 6 },
+                new() { Letter = "A", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 7 },
+                new() { Letter = "T", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 8 }
+            },
+            StartRow = 7,
+            StartColumn = 6,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: KAT scored
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("KAT");
+
+        // Step 2: Player2 places "Hond" vertically at (3,7)-(6,7) crossing A at (7,7)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "H", IsBlank = false, TileId = hand2[0].Id, Row = 3, Column = 7 },
+                new() { Letter = "O", IsBlank = false, TileId = hand2[1].Id, Row = 4, Column = 7 },
+                new() { Letter = "N", IsBlank = false, TileId = hand2[2].Id, Row = 5, Column = 7 },
+                new() { Letter = "D", IsBlank = false, TileId = hand2[3].Id, Row = 6, Column = 7 }
+            },
+            StartRow = 3,
+            StartColumn = 7,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: HOND scored + cross word on KAT column
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("HOND");
+        formedWords2.Should().HaveCountGreaterThan(1);
+
+        // Step 3: Player1 places "Vogel" horizontally at (10,4)-(10,8)
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "V", IsBlank = false, TileId = hand3[0].Id, Row = 10, Column = 4 },
+                new() { Letter = "O", IsBlank = false, TileId = hand3[1].Id, Row = 10, Column = 5 },
+                new() { Letter = "G", IsBlank = false, TileId = hand3[2].Id, Row = 10, Column = 6 },
+                new() { Letter = "E", IsBlank = false, TileId = hand3[3].Id, Row = 10, Column = 7 },
+                new() { Letter = "L", IsBlank = false, TileId = hand3[4].Id, Row = 10, Column = 8 }
+            },
+            StartRow = 10,
+            StartColumn = 4,
+            Direction = 0
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: VOGEL scored
+        player1Score2.Should().BeGreaterThan(player1Score1);
+        formedWords3.Should().Contain("VOGEL");
+    }
+
+    [Fact]
+    public async Task PlaceTilesAsync_ShouldScoreMultipleWordCombinations_WithWaterVuurAardeLucht()
+    {
+        // Arrange: Configure mock to accept all words used in this test
+        _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        var game = await _service.CreateGameAsync("Player1");
+        await _service.JoinGameAsync(game.Id, "Player2");
+        var player1Id = game.Players.First(p => p.Id == game.CurrentPlayerId).Id;
+
+        // Step 1: Player1 places "Water" horizontally at (7,5)-(7,9)
+        var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
+        var request1 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "W", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
+                new() { Letter = "A", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 6 },
+                new() { Letter = "T", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 7 },
+                new() { Letter = "E", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 },
+                new() { Letter = "R", IsBlank = false, TileId = hand1[4].Id, Row = 7, Column = 9 }
+            },
+            StartRow = 7,
+            StartColumn = 5,
+            Direction = 0
+        };
+
+        var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
+        var player1Score1 = placedGame1.Players.First(p => p.Id == player1Id).Score;
+        var formedWords1 = placedGame1.FormedWords;
+
+        // Verify: WATER scored
+        player1Score1.Should().BeGreaterThan(0);
+        formedWords1.Should().Contain("WATER");
+
+        // Step 2: Player2 places "Vuur" vertically at (3,7)-(6,7) crossing T at (7,7)
+        var result2 = await _service.GetGameAsync(game.Id);
+        var player2Id = result2!.CurrentPlayerId!;
+        var hand2 = result2.Players.First(p => p.Id == player2Id).Hand;
+
+        var request2 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "V", IsBlank = false, TileId = hand2[0].Id, Row = 3, Column = 7 },
+                new() { Letter = "U", IsBlank = false, TileId = hand2[1].Id, Row = 4, Column = 7 },
+                new() { Letter = "U", IsBlank = false, TileId = hand2[2].Id, Row = 5, Column = 7 },
+                new() { Letter = "R", IsBlank = false, TileId = hand2[3].Id, Row = 6, Column = 7 }
+            },
+            StartRow = 3,
+            StartColumn = 7,
+            Direction = 1
+        };
+
+        var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
+        var player2Score1 = placedGame2.Players.First(p => p.Id == player2Id).Score;
+        var formedWords2 = placedGame2.FormedWords;
+
+        // Verify: VUUR scored + cross word on WATER column
+        player2Score1.Should().BeGreaterThan(0);
+        formedWords2.Should().Contain("VUUR");
+        formedWords2.Should().HaveCountGreaterThan(1);
+
+        // Step 3: Player1 places "Aarde" horizontally at (12,5)-(12,9)
+        var result3 = await _service.GetGameAsync(game.Id);
+        var player1AgainId = result3!.CurrentPlayerId!;
+        var hand3 = result3.Players.First(p => p.Id == player1AgainId).Hand;
+
+        var request3 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "A", IsBlank = false, TileId = hand3[0].Id, Row = 12, Column = 5 },
+                new() { Letter = "A", IsBlank = false, TileId = hand3[1].Id, Row = 12, Column = 6 },
+                new() { Letter = "R", IsBlank = false, TileId = hand3[2].Id, Row = 12, Column = 7 },
+                new() { Letter = "D", IsBlank = false, TileId = hand3[3].Id, Row = 12, Column = 8 },
+                new() { Letter = "E", IsBlank = false, TileId = hand3[4].Id, Row = 12, Column = 9 }
+            },
+            StartRow = 12,
+            StartColumn = 5,
+            Direction = 0
+        };
+
+        var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
+        var player1Score2 = placedGame3.Players.First(p => p.Id == player1AgainId).Score;
+        var formedWords3 = placedGame3.FormedWords;
+
+        // Verify: AARDE scored
+        player1Score2.Should().BeGreaterThan(player1Score1);
+        formedWords3.Should().Contain("AARDE");
+
+        // Step 4: Player2 places "Lucht" vertically at (9,10)-(13,10) connecting to E at (12,9)
+        var result4 = await _service.GetGameAsync(game.Id);
+        var player2AgainId = result4!.CurrentPlayerId!;
+        var hand4 = result4.Players.First(p => p.Id == player2AgainId).Hand;
+
+        var request4 = new PlaceTilesRequest
+        {
+            Tiles = new List<TilePlacementDto>
+            {
+                new() { Letter = "L", IsBlank = false, TileId = hand4[0].Id, Row = 9, Column = 10 },
+                new() { Letter = "U", IsBlank = false, TileId = hand4[1].Id, Row = 10, Column = 10 },
+                new() { Letter = "C", IsBlank = false, TileId = hand4[2].Id, Row = 11, Column = 10 },
+                new() { Letter = "H", IsBlank = false, TileId = hand4[3].Id, Row = 12, Column = 10 },
+                new() { Letter = "T", IsBlank = false, TileId = hand4[4].Id, Row = 13, Column = 10 }
+            },
+            StartRow = 9,
+            StartColumn = 10,
+            Direction = 1
+        };
+
+        var placedGame4 = await _service.PlaceTilesAsync(game.Id, player2AgainId, request4);
+        var player2Score2 = placedGame4.Players.First(p => p.Id == player2AgainId).Score;
+        var formedWords4 = placedGame4.FormedWords;
+
+        // Verify: LUCHT scored + cross word on AARDE column
+        player2Score2.Should().BeGreaterThan(player2Score1);
+        formedWords4.Should().Contain("LUCHT");
+        formedWords4.Should().HaveCountGreaterThan(1);
     }
 
     #endregion

@@ -404,10 +404,10 @@ public class GameService : IGameService
                 throw new InvalidOperationException(
                     $"Player has only {player.Hand.Count} tiles but wants to swap {tilesToSwap}.");
 
-            // Check if enough tiles remain in the bag
-            if (game.TileBag.Count < tilesToSwap)
+            // Check if at least 7 tiles remain in the bag (Wordfeud rule)
+            if (game.TileBag.Count < 7)
                 throw new InvalidOperationException(
-                    $"Not enough tiles in the bag to swap. Available: {game.TileBag.Count}, Requested: {tilesToSwap}");
+                    $"Cannot swap tiles. At least 7 tiles must remain in the bag. Available: {game.TileBag.Count}");
 
             // Remove tiles from hand and return to bag
             foreach (var tileId in request.TileIds!)
@@ -822,7 +822,7 @@ public class GameService : IGameService
                 var tile = game.Board[tileDto.Row, tileDto.Column];
                 var letterPoints = tile?.Points ?? 0;
 
-                // Apply letter bonuses (only to newly placed tiles)
+                // Apply letter bonuses (Wordfeud rule: letter bonuses apply to ALL words the tile crosses)
                 var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
                 if (bonus == BonusType.DoubleLetter)
                     letterPoints *= 2;
