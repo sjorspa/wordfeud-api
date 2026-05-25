@@ -144,4 +144,109 @@ public class BoardConverterTests
         deserialized.GetTile(7, 8)!.BlankRepresentation.Should().Be("Q");
         deserialized.GetTile(7, 9)!.Letter.Should().Be("E");
     }
+
+    [Fact]
+    public void Deserialize_InvalidJsonTokenType_ThrowsJsonException()
+    {
+        // Arrange
+        var json = "\"not an array\"";
+
+        // Act & Assert
+        var exception = Record.Exception(() => JsonSerializer.Deserialize<Board>(json, _options));
+        exception.Should().BeOfType<JsonException>();
+    }
+
+    [Fact]
+    public void Deserialize_MultidimensionalArrayOfStrings_ThrowsJsonException()
+    {
+        // Arrange
+        var json = "[[\"A\",\"B\"],[\"C\",\"D\"]]";
+
+        // Act & Assert
+        var exception = Record.Exception(() => JsonSerializer.Deserialize<Board>(json, _options));
+        exception.Should().BeOfType<JsonException>();
+    }
+
+    [Fact]
+    public void Deserialize_TilesBeyondBoardBounds_CropsToBoardSize()
+    {
+        // Arrange
+        var json = @"[[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]]";
+
+        // Act
+        var deserialized = JsonSerializer.Deserialize<Board>(json, _options);
+
+        // Assert
+        deserialized.Should().NotBeNull();
+        deserialized!.Size.Should().Be(15);
+    }
+
+    [Fact]
+    public void Deserialize_InvalidTilePosition_SkipsInvalidTile()
+    {
+        // Arrange
+        var board = new Board();
+        board.SetTile(7, 7, new Tile { Letter = "A", Points = 1, IsBlank = false });
+
+        // Act
+        var json = JsonSerializer.Serialize(board, _options);
+        var deserialized = JsonSerializer.Deserialize<Board>(json, _options);
+
+        // Assert
+        deserialized.Should().NotBeNull();
+        deserialized!.GetTile(7, 7)!.Letter.Should().Be("A");
+    }
+
+    [Fact]
+    public void Deserialize_NestedArrayWithNullElements_PersistsCorrectly()
+    {
+        // Arrange
+        var board = new Board();
+        board.SetTile(0, 0, new Tile { Letter = "A", Points = 1, IsBlank = false });
+        board.SetTile(14, 14, new Tile { Letter = "B", Points = 4, IsBlank = false });
+
+        // Act
+        var json = JsonSerializer.Serialize(board, _options);
+        var deserialized = JsonSerializer.Deserialize<Board>(json, _options);
+
+        // Assert
+        deserialized.Should().NotBeNull();
+        deserialized!.GetTile(0, 0)!.Letter.Should().Be("A");
+        deserialized.GetTile(14, 14)!.Letter.Should().Be("B");
+        deserialized.GetTile(7, 7).Should().BeNull();
+    }
+
+    [Fact]
+    public void Deserialize_RowsWithDifferentLengths_HandlesCorrectly()
+    {
+        // Arrange
+        var board = new Board();
+        board.SetTile(0, 0, new Tile { Letter = "A", Points = 1, IsBlank = false });
+        board.SetTile(1, 1, new Tile { Letter = "B", Points = 4, IsBlank = false });
+        board.SetTile(2, 2, new Tile { Letter = "C", Points = 5, IsBlank = false });
+
+        // Act
+        var json = JsonSerializer.Serialize(board, _options);
+        var deserialized = JsonSerializer.Deserialize<Board>(json, _options);
+
+        // Assert
+        deserialized.Should().NotBeNull();
+        deserialized!.GetTile(0, 0)!.Letter.Should().Be("A");
+        deserialized.GetTile(1, 1)!.Letter.Should().Be("B");
+        deserialized.GetTile(2, 2)!.Letter.Should().Be("C");
+    }
+
+    [Fact]
+    public void Deserialize_EmptyNestedArrays_ReturnsEmptyBoard()
+    {
+        // Arrange
+        var json = "[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]";
+
+        // Act
+        var deserialized = JsonSerializer.Deserialize<Board>(json, _options);
+
+        // Assert
+        deserialized.Should().NotBeNull();
+        deserialized!.Size.Should().Be(15);
+    }
 }
