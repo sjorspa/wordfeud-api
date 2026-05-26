@@ -110,7 +110,18 @@ public class IndexModel : PageModel
     {
         if (!string.IsNullOrWhiteSpace(GameId))
         {
-            CurrentGame = await _httpClient.GetFromJsonAsync<GameViewModel>($"{ApiBaseUrl}/games/{GameId}");
+            try
+            {
+                CurrentGame = await _httpClient.GetFromJsonAsync<GameViewModel>($"{ApiBaseUrl}/games/{GameId}");
+                if (CurrentGame == null)
+                {
+                    ErrorMessage = "Failed to load game state: API returned no data.";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to load game state: {ex.Message}";
+            }
         }
     }
 
@@ -121,7 +132,18 @@ public class IndexModel : PageModel
     {
         if (!string.IsNullOrWhiteSpace(GameId))
         {
-            CurrentGame = await _httpClient.GetFromJsonAsync<GameViewModel>($"{ApiBaseUrl}/games/{GameId}");
+            try
+            {
+                CurrentGame = await _httpClient.GetFromJsonAsync<GameViewModel>($"{ApiBaseUrl}/games/{GameId}");
+                if (CurrentGame == null)
+                {
+                    ErrorMessage = "Failed to refresh game state: API returned no data.";
+                }
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to refresh game state: {ex.Message}";
+            }
         }
         return Page();
     }

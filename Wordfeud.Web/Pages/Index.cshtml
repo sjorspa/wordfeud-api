@@ -600,7 +600,7 @@
                 </form>
 
                 @* Join game form (if game not started) *@
-                @if (Model.CurrentGame.Status == "waiting")
+                @if (Model.CurrentGame?.Status?.ToLower() == "waiting")
                 {
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #0f3460;">
                         <h4>Join Game</h4>

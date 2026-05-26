@@ -79,6 +79,16 @@ public class Game
     public int MoveNumber { get; set; }
 
     /// <summary>
+    /// Gets the number of tiles remaining in the bag (for web compatibility).
+    /// </summary>
+    public int BagCount => TileBag.Count;
+
+    /// <summary>
+    /// Gets the board tiles as a list (for web compatibility).
+    /// </summary>
+    public List<BoardTileDto> BoardTiles => Board.Tiles;
+
+    /// <summary>
     /// The timestamp when the game was created.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
