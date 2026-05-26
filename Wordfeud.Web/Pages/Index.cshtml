@@ -468,7 +468,7 @@
             @* Game layout *@
             <div class="game-layout">
                 @* Player 1 panel *@
-                <div class="player-panel @(Model.CurrentGame.Players.FirstOrDefault(p => p.Id == Model.CurrentGame.CurrentPlayerId)?.Id == Model.CurrentGame.Players[0]?.Id ? "active" : "")">
+                <div class="player-panel @(Model.CurrentGame.Players.FirstOrDefault(p => p.Id == Model.CurrentGame.CurrentPlayerId)?.Id == (Model.CurrentGame.Players.Count > 0 ? Model.CurrentGame.Players[0].Id : null) ? "active" : "")">
                     <h3>@Model.CurrentGame.Players.FirstOrDefault()?.Name</h3>
                     <div class="score">@Model.CurrentGame.Players.FirstOrDefault()?.Score pts</div>
                     <div class="rack">
