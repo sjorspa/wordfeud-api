@@ -51,12 +51,15 @@ public class GameService : IGameService
         game.Players[0].Hand = DrawTiles(game, 7);
         game.Players[0].TilesDrawn = 7;
 
+        // Set the creator as the first player (current player)
+        game.CurrentPlayerId = game.Players[0].Id;
+
         lock (_lock)
         {
             _games[game.Id] = game;
         }
 
-        _logger.LogInformation("Game {GameId} created", game.Id);
+        _logger.LogInformation("Game {GameId} created with player '{PlayerName}'", game.Id, playerName);
         return Task.FromResult(game);
     }
 
