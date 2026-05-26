@@ -584,6 +584,19 @@
             <div class="setup-panel">
                 <h2>Start a Game</h2>
                 
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="error">
+                        @foreach (var key in ViewData.ModelState.Keys)
+                        {
+                            @foreach (var error in ViewData.ModelState[key]!.Errors)
+                            {
+                                <div>@error.ErrorMessage</div>
+                            }
+                        }
+                    </div>
+                }
+
                 <div class="setup-options">
                     <div class="setup-option">
                         <h3>Create New Game</h3>

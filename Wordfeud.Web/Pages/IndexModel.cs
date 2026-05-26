@@ -41,7 +41,7 @@ public class IndexModel : PageModel
     /// <summary>
     /// Gets the API base URL.
     /// </summary>
-    private string ApiBaseUrl => _configuration["ApiUrl"] ?? "http://localhost:8080" + "/api";
+    private string ApiBaseUrl => (_configuration["ApiUrl"] ?? "http://localhost:8080") + "/api";
 
     public IndexModel(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
