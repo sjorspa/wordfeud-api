@@ -9,11 +9,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for turn management via the <c>POST /api/games/{id}/pass</c> endpoint.
 /// </summary>
-public class TurnManagementTests : IClassFixture<WebApplicationFactory<Program>>
+public class TurnManagementTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public TurnManagementTests(WebApplicationFactory<Program> factory)
+    public TurnManagementTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

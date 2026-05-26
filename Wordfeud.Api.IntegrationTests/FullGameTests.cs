@@ -9,11 +9,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Single comprehensive integration test that simulates an entire Wordfeud game from start to finish.
 /// </summary>
-public class FullGameTests : IClassFixture<WebApplicationFactory<Program>>
+public class FullGameTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public FullGameTests(WebApplicationFactory<Program> factory)
+    public FullGameTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

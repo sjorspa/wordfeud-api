@@ -11,11 +11,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for querying game state via the <c>GET /api/games/{id}</c>, <c>GET /api/games/{id}/scores</c>, and <c>GET /api/games/{id}/board</c> endpoints.
 /// </summary>
-public class GameQueryTests : IClassFixture<WebApplicationFactory<Program>>
+public class GameQueryTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public GameQueryTests(WebApplicationFactory<Program> factory)
+    public GameQueryTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

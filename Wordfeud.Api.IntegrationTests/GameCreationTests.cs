@@ -10,11 +10,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for game creation via the <c>POST /api/games</c> endpoint.
 /// </summary>
-public class GameCreationTests : IClassFixture<WebApplicationFactory<Program>>
+public class GameCreationTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public GameCreationTests(WebApplicationFactory<Program> factory)
+    public GameCreationTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

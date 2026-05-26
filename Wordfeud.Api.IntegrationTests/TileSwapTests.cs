@@ -9,11 +9,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for tile swapping via the <c>POST /api/games/{id}/swap</c> endpoint.
 /// </summary>
-public class TileSwapTests : IClassFixture<WebApplicationFactory<Program>>
+public class TileSwapTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public TileSwapTests(WebApplicationFactory<Program> factory)
+    public TileSwapTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

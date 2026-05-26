@@ -1,0 +1,662 @@
+@page
+@using Wordfeud.Web.Pages
+@model IndexModel
+@{
+    ViewData["Title"] = "Wordfeud";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wordfeud</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #f0c040;
+            font-size: 2.5rem;
+        }
+
+        /* Game creation / joining */
+        .setup-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #16213e;
+            border-radius: 12px;
+            max-width: 400px;
+        }
+
+        .setup-panel input {
+            padding: 12px 16px;
+            font-size: 1rem;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #eee;
+            width: 100%;
+        }
+
+        .setup-panel button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .setup-panel button:hover {
+            background: #c73e54;
+        }
+
+        /* Layout */
+        .game-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .player-panel {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 200px;
+            max-width: 250px;
+        }
+
+        .player-panel.active {
+            border: 3px solid #f0c040;
+        }
+
+        .player-panel h3 {
+            margin-bottom: 10px;
+            color: #f0c040;
+        }
+
+        .player-panel .score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Rack */
+        .rack {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            min-height: 60px;
+            padding: 10px;
+            background: #0f3460;
+            border-radius: 8px;
+        }
+
+        .rack-tile {
+            width: 45px;
+            height: 45px;
+            background: #f5e6c4;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 2px solid #c9a86c;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .rack-tile:hover {
+            border-color: #f0c040;
+            transform: translateY(-2px);
+        }
+
+        .rack-tile.selected {
+            background: #f0c040;
+            border-color: #e94560;
+            transform: translateY(-4px);
+        }
+
+        .rack-tile .points {
+            position: absolute;
+            bottom: 2px;
+            right: 3px;
+            font-size: 0.6rem;
+            color: #666;
+        }
+
+        .rack-tile.blank-tile {
+            background: #ddd;
+        }
+
+        /* Board */
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(15, 36px);
+            grid-template-rows: repeat(15, 36px);
+            gap: 2px;
+            background: #0f3460;
+            padding: 4px;
+            border-radius: 8px;
+        }
+
+        .board-cell {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 4px;
+            background: #e8dcc8;
+            position: relative;
+        }
+
+        .board-cell.tws {
+            background: #e94560;
+            color: white;
+        }
+
+        .board-cell.dws {
+            background: #f09060;
+            color: white;
+        }
+
+        .board-cell.tls {
+            background: #6090e0;
+            color: white;
+        }
+
+        .board-cell.dls {
+            background: #90c0f0;
+            color: white;
+        }
+
+        .board-cell.center {
+            background: #e94560;
+            color: white;
+            font-size: 0.6rem;
+        }
+
+        .board-cell .tile-on-board {
+            width: 30px;
+            height: 30px;
+            background: #f5e6c4;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            border: 1px solid #c9a86c;
+        }
+
+        .board-cell .tile-on-board .points {
+            position: absolute;
+            bottom: 1px;
+            right: 2px;
+            font-size: 0.5rem;
+            color: #666;
+        }
+
+        /* Action bar */
+        .action-bar {
+            margin-top: 20px;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .action-bar h4 {
+            margin-bottom: 10px;
+            color: #f0c040;
+        }
+
+        .action-bar form {
+            display: inline-flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .action-bar label {
+            font-size: 0.9rem;
+        }
+
+        .action-bar input[type="number"] {
+            width: 50px;
+            padding: 6px;
+            border: 2px solid #0f3460;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #eee;
+            text-align: center;
+        }
+
+        .action-bar select {
+            padding: 8px 12px;
+            border: 2px solid #0f3460;
+            border-radius: 6px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+
+        .action-bar button {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-place {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-place:hover {
+            background: #218838;
+        }
+
+        .btn-swap {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-swap:hover {
+            background: #e0a800;
+        }
+
+        .btn-pass {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-pass:hover {
+            background: #5a6268;
+        }
+
+        .btn-refresh {
+            background: #0f3460;
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background: #1a4a80;
+        }
+
+        /* Status */
+        .status-bar {
+            margin-top: 15px;
+            padding: 10px;
+            background: #16213e;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-bar .game-id {
+            font-family: monospace;
+            color: #f0c040;
+        }
+
+        /* Error messages */
+        .error {
+            color: #e94560;
+            padding: 10px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        /* Info */
+        .info {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+
+        /* Blank assignment modal */
+        .blank-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .blank-modal.show {
+            display: flex;
+        }
+
+        .blank-modal-content {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .blank-modal-content input {
+            width: 60px;
+            padding: 10px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #eee;
+            text-transform: uppercase;
+        }
+
+        .blank-modal-content button {
+            margin-top: 10px;
+            padding: 8px 20px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Legend */
+        .legend {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-box {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+        }
+
+        .legend-box.tws { background: #e94560; }
+        .legend-box.dws { background: #f09060; }
+        .legend-box.tls { background: #6090e0; }
+        .legend-box.dls { background: #90c0f0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wordfeud</h1>
+
+        @if (Model.CurrentGame == null)
+        {
+            <div class="setup-panel">
+                <h2>Start a Game</h2>
+                <form method="post">
+                    <input asp-for="PlayerName" placeholder="Enter your name" />
+                    <button type="submit" name="action" value="create">Create Game</button>
+                </form>
+                <p style="color: #aaa;">Create a game, then share the Game ID with your opponent.</p>
+            </div>
+        }
+        else
+        {
+            @* Status bar *@
+            <div class="status-bar">
+                <div>Game ID: <span class="game-id">@Model.CurrentGame.Id</span></div>
+                <div>Move #: @Model.CurrentGame.MoveNumber | Bag: @Model.CurrentGame.BagCount tiles | Status: @Model.CurrentGame.Status</div>
+                @if (Model.CurrentGame.ConsecutivePasses > 0)
+                {
+                    <div style="color: #ffc107;">Consecutive passes: @Model.CurrentGame.ConsecutivePasses</div>
+                }
+            </div>
+
+            @* Refresh button *@
+            <div style="text-align: center; margin-top: 10px;">
+                <form method="get">
+                    <button type="submit" name="refresh" value="1" class="btn-refresh">Refresh Board</button>
+                </form>
+            </div>
+
+            @* Game layout *@
+            <div class="game-layout">
+                @* Player 1 panel *@
+                <div class="player-panel @(Model.CurrentGame.Players.FirstOrDefault(p => p.Id == Model.CurrentGame.CurrentPlayerId)?.Id == Model.CurrentGame.Players[0]?.Id ? "active" : "")">
+                    <h3>@Model.CurrentGame.Players.FirstOrDefault()?.Name</h3>
+                    <div class="score">@Model.CurrentGame.Players.FirstOrDefault()?.Score pts</div>
+                    <div class="rack">
+                        @foreach (var tile in Model.CurrentGame.Players.FirstOrDefault()?.Hand ?? new List<TileViewModel>())
+                        {
+                            var isBlankClass = tile.IsBlank ? "blank-tile" : "";
+                            <div class="rack-tile @isBlankClass"
+                                 onclick="selectTile('@tile.Id')"
+                                 title="@tile.Letter (@tile.Points) pts">
+                                @(tile.IsBlank ? "?" : tile.Letter)
+                                <span class="points">@tile.Points</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="info">Tiles: @(Model.CurrentGame.Players.FirstOrDefault()?.Hand.Count ?? 0)</div>
+                </div>
+
+                @* Board *@
+                <div class="board-container">
+                    <div class="board">
+                        @for (var row = 0; row < 15; row++)
+                        {
+                            @for (var col = 0; col < 15; col++)
+                            {
+                                var bonusType = IndexModel.GetBonusType(row, col);
+                                var cellClass = "board-cell";
+                                var displayText = "";
+
+                                if (row == 7 && col == 7)
+                                {
+                                    cellClass += " center";
+                                    displayText = "★";
+                                }
+                                else if (!string.IsNullOrEmpty(bonusType))
+                                {
+                                    cellClass += " " + bonusType.ToLower();
+                                    displayText = bonusType;
+                                }
+
+                                // Check if a tile is on this square
+                                var boardTile = Model.CurrentGame.BoardTiles.FirstOrDefault(t => t.Row == row && t.Column == col);
+                                if (boardTile != null)
+                                {
+                                    displayText = boardTile.IsBlank ? (boardTile.BlankRepresentation ?? "?") : boardTile.Letter;
+                                }
+
+                                <div class="@cellClass">
+                                    @if (!string.IsNullOrEmpty(displayText))
+                                    {
+                                        <span>@displayText</span>
+                                    }
+                                    @if (boardTile != null)
+                                    {
+                                        <div class="tile-on-board">
+                                            @(boardTile.IsBlank ? (boardTile.BlankRepresentation ?? "?") : boardTile.Letter)
+                                            <span class="points">@boardTile.Points</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    @* Legend *@
+                    <div class="legend">
+                        <div class="legend-item"><div class="legend-box tws"></div> Triple Word</div>
+                        <div class="legend-item"><div class="legend-box dws"></div> Double Word</div>
+                        <div class="legend-item"><div class="legend-box tls"></div> Triple Letter</div>
+                        <div class="legend-item"><div class="legend-box dls"></div> Double Letter</div>
+                    </div>
+                </div>
+
+                @* Player 2 panel *@
+                <div class="player-panel @(Model.CurrentGame.Players.Count > 1 && Model.CurrentGame.Players[1]?.Id == Model.CurrentGame.CurrentPlayerId ? "active" : "")">
+                    <h3>@(Model.CurrentGame.Players.Count > 1 ? Model.CurrentGame.Players[1].Name : "Waiting...")</h3>
+                    <div class="score">@(Model.CurrentGame.Players.Count > 1 ? Model.CurrentGame.Players[1].Score.ToString() + " pts" : "-")</div>
+                    <div class="rack">
+                        @if (Model.CurrentGame.Players.Count > 1)
+                        {
+                            foreach (var tile in Model.CurrentGame.Players[1].Hand)
+                            {
+                                var isBlankClass = tile.IsBlank ? "blank-tile" : "";
+                                <div class="rack-tile @isBlankClass"
+                                     onclick="selectTile('@tile.Id')"
+                                     title="@tile.Letter (@tile.Points) pts">
+                                    @(tile.IsBlank ? "?" : tile.Letter)
+                                    <span class="points">@tile.Points</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="info">Tiles: @(Model.CurrentGame.Players.Count > 1 ? Model.CurrentGame.Players[1].Hand.Count.ToString() : "0")</div>
+                </div>
+            </div>
+
+            @* Action bar *@
+            <div class="action-bar">
+                <h4>Actions</h4>
+
+                @* Place tiles form *@
+                <form method="post" id="placeForm" style="margin-bottom: 10px;">
+                    <label>From:
+                        <input type="number" asp-for="CurrentGame != null ? new PlaceTilesFormModel().StartRow : 0"
+                               name="StartRow" min="0" max="14" value="0" style="width: 50px;" />
+                        ,
+                        <input type="number" asp-for="CurrentGame != null ? new PlaceTilesFormModel().StartColumn : 0"
+                               name="StartColumn" min="0" max="14" value="0" style="width: 50px;" />
+                    </label>
+                    <label>Direction:
+                        <select name="Direction">
+                            <option value="horizontal">Horizontal →</option>
+                            <option value="vertical">Vertical ↓</option>
+                        </select>
+                    </label>
+                    <br /><br />
+                    <button type="submit" name="action" value="place" class="btn-place">Place Tiles</button>
+                    <input type="hidden" name="SelectedTiles" id="selectedTilesInput" />
+                </form>
+
+                @* Swap tiles form *@
+                <form method="post">
+                    <label>Swap selected tiles:
+                        <input type="text" name="SelectedTiles" placeholder="Tile IDs (comma-separated)" style="width: 200px;" />
+                    </label>
+                    <button type="submit" name="action" value="swap" class="btn-swap">Swap Tiles</button>
+                </form>
+
+                @* Pass turn button *@
+                <form method="post" style="display: inline;">
+                    <button type="submit" name="action" value="pass" class="btn-pass">Pass Turn</button>
+                </form>
+
+                @* Join game form (if game not started) *@
+                @if (Model.CurrentGame.Status == "Waiting")
+                {
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #0f3460;">
+                        <h4>Join Game</h4>
+                        <form method="post">
+                            <input asp-for="PlayerName" placeholder="Your name" style="width: 150px;" />
+                            <button type="submit" name="action" value="join" class="btn-place">Join Game</button>
+                        </form>
+                    </div>
+                }
+            </div>
+
+            @* Error messages *@
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="error">
+                    @foreach (var key in ViewData.ModelState.Keys)
+                    {
+                        @foreach (var error in ViewData.ModelState[key]!.Errors)
+                        {
+                            <div>@error.ErrorMessage</div>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+
+    <script>
+        var selectedTiles = [];
+
+        function selectTile(tileId) {
+            var index = selectedTiles.indexOf(tileId);
+            if (index > -1) {
+                selectedTiles.splice(index, 1);
+            } else {
+                selectedTiles.push(tileId);
+            }
+            document.getElementById('selectedTilesInput').value = selectedTiles.join(',');
+
+            // Update visual selection
+            document.querySelectorAll('.rack-tile').forEach(function(el) {
+                el.classList.remove('selected');
+            });
+            event.target.closest('.rack-tile').classList.add('selected');
+        }
+
+        function checkBlankTiles() {
+            // Check if any selected tiles are blanks and need assignment
+            var hasBlanks = false;
+            selectedTiles.forEach(function(id) {
+                // This would need to be populated from server-side data
+            });
+            return !hasBlanks;
+        }
+    </script>
+</body>
+</html>

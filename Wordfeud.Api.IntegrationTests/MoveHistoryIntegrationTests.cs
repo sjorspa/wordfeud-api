@@ -9,11 +9,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for the move history feature (GET /api/games/{id}/moves).
 /// </summary>
-public class MoveHistoryIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public MoveHistoryIntegrationTests(WebApplicationFactory<Program> factory)
+    public MoveHistoryIntegrationTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

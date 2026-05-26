@@ -9,11 +9,11 @@ namespace Wordfeud.Api.IntegrationTests;
 /// <summary>
 /// Integration tests for placing tiles via the <c>POST /api/games/{id}/place</c> endpoint.
 /// </summary>
-public class TilePlacementTests : IClassFixture<WebApplicationFactory<Program>>
+public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public TilePlacementTests(WebApplicationFactory<Program> factory)
+    public TilePlacementTests(TestWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }

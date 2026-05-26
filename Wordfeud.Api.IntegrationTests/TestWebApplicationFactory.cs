@@ -15,6 +15,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
     {
         builder.ConfigureServices(services =>
         {
+            // Add Razor Pages services required by the frontend
+            services.AddRazorPages();
+
             // Add JSON options with BoardConverter to the MVC configuration
             services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
