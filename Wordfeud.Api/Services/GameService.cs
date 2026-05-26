@@ -550,20 +550,17 @@ public class GameService : IGameService
             }
         }
 
-        // Validate direction is horizontal (0) or vertical (1)
-        if (request.Direction != 0 && request.Direction != 1)
-        {
-            return (false, "Direction must be 0 (horizontal) or 1 (vertical).");
-        }
+        // Derive direction from tile coordinates
+        var direction = DeriveDirection(request.Tiles);
 
         // Check tiles are in a line (horizontal or vertical)
-        if (!AreInLine(request.Tiles, request.Direction))
+        if (!AreInLine(request.Tiles, direction))
         {
             return (false, "All placed tiles must be in a straight line (horizontal or vertical).");
         }
 
         // Check for gaps in placement
-        if (HasGaps(request.Tiles, request.Direction))
+        if (HasGaps(request.Tiles, direction))
         {
             return (false, "Placed tiles must be contiguous (no gaps).");
         }
@@ -673,15 +670,18 @@ public class GameService : IGameService
     {
         var words = new List<(string Word, bool IsCrossWord)>();
 
+        // Derive direction from tile coordinates
+        var direction = DeriveDirection(request.Tiles);
+
         // Build the main word from request tile letters directly
-        var mainWord = request.Direction == 0
+        var mainWord = direction == 0
             ? BuildStringFromTiles(request.Tiles.OrderBy(t => t.Column).ToList(), request.BlankAssignments)
             : BuildStringFromTiles(request.Tiles.OrderBy(t => t.Row).ToList(), request.BlankAssignments);
 
         if (mainWord.Length >= 2)
             words.Add((mainWord, false));
 
-        if (request.Direction == 0)
+        if (direction == 0)
         {
             // Horizontal placement - cross words are vertical
             var row = request.Tiles[0].Row;
@@ -843,8 +843,9 @@ public class GameService : IGameService
     /// </summary>
     private int ScoreCrossWord(Game game, string word, PlaceTilesRequest request)
     {
-        // Determine the perpendicular direction for the cross word
-        var isHorizontalMain = request.Direction == 0;
+        // Derive direction from tile coordinates
+        var direction = DeriveDirection(request.Tiles);
+        var isHorizontalMain = direction == 0;
 
         foreach (var tileDto in request.Tiles)
         {
@@ -860,6 +861,29 @@ public class GameService : IGameService
             }
         }
 
+        return 0;
+    }
+
+    /// <summary>
+    /// Derives the placement direction from tile coordinates.
+    /// Returns 0 (horizontal) if all tiles share the same row, 1 (vertical) if all share the same column.
+    /// </summary>
+    private static int DeriveDirection(List<TilePlacementDto> tiles)
+    {
+        if (tiles.Count <= 1)
+            return 0; // Default to horizontal for single tile
+
+        // Check if all tiles share the same row (horizontal placement)
+        var row = tiles[0].Row;
+        if (tiles.All(t => t.Row == row))
+            return 0;
+
+        // Check if all tiles share the same column (vertical placement)
+        var col = tiles[0].Column;
+        if (tiles.All(t => t.Column == col))
+            return 1;
+
+        // Fallback: default to horizontal
         return 0;
     }
 

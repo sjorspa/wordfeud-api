@@ -30,6 +30,7 @@ public class JoinGameRequest
 
 /// <summary>
 /// Request DTO for placing tiles on the board.
+/// Direction is derived from tile coordinates (horizontal if all rows match, vertical if all columns match).
 /// </summary>
 public class PlaceTilesRequest
 {
@@ -40,24 +41,6 @@ public class PlaceTilesRequest
     [MinLength(1, ErrorMessage = "At least one tile must be placed.")]
     [MaxLength(7, ErrorMessage = "Cannot place more than 7 tiles at once.")]
     public required List<TilePlacementDto> Tiles { get; set; }
-
-    /// <summary>
-    /// The starting row position.
-    /// </summary>
-    [Range(0, 14, ErrorMessage = "StartRow must be between 0 and 14.")]
-    public required int StartRow { get; set; }
-
-    /// <summary>
-    /// The starting column position.
-    /// </summary>
-    [Range(0, 14, ErrorMessage = "StartColumn must be between 0 and 14.")]
-    public required int StartColumn { get; set; }
-
-    /// <summary>
-    /// The direction of placement: 0 = horizontal, 1 = vertical.
-    /// </summary>
-    [Required]
-    public required int Direction { get; set; }
 
     /// <summary>
     /// Blank tile assignments (tile ID → letter representation).
