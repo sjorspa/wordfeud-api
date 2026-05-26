@@ -212,6 +212,11 @@ public class BoardTileDto
     public bool IsBlank { get; set; }
 
     /// <summary>
+    /// Gets the point value of the tile.
+    /// </summary>
+    public int Points { get; set; }
+
+    /// <summary>
     /// Gets the bonus type for this position.
     /// </summary>
     public string BonusType { get; set; } = string.Empty;
