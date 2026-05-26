@@ -4,6 +4,7 @@ using Wordfeud.Api.Models;
 using Wordfeud.Api.Serialization;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 public sealed class Program
 {
@@ -18,6 +19,7 @@ public sealed class Program
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 options.JsonSerializerOptions.Converters.Add(new BoardConverter());
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
 
         builder.Services.AddEndpointsApiExplorer();

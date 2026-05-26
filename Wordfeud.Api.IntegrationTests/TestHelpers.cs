@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Wordfeud.Api.Models;
 using Wordfeud.Api.Serialization;
 
@@ -13,7 +14,7 @@ public static class TestHelpers
 {
     private static readonly JsonSerializerOptions Options = new()
     {
-        Converters = { new BoardConverter() },
+        Converters = { new BoardConverter(), new JsonStringEnumConverter() },
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
