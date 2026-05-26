@@ -80,9 +80,6 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentGame.CurrentPlayerId}", placeRequest);
@@ -206,9 +203,6 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
         await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentGame.CurrentPlayerId}", placeRequest);
 
@@ -235,9 +229,6 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
                     column = 8
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 1
         };
         await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentGame.CurrentPlayerId}", placeRequest);
 

@@ -266,9 +266,6 @@ public class IndexModel : PageModel
         var request = new
         {
             tiles,
-            startRow = tiles.Any() ? tiles[0].row : 7,
-            startColumn = tiles.Any() ? tiles[0].column : 7,
-            direction = 0,
             blankAssignments = new Dictionary<string, string>()
         };
 

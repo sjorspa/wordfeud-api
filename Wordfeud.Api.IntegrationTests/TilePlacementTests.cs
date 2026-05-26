@@ -45,9 +45,6 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -74,9 +71,6 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -111,9 +105,6 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -159,9 +150,6 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
                     column = 8
                 }
             },
-            startRow = 7,
-            startColumn = 8,
-            direction = 0
         };
 
         // Act

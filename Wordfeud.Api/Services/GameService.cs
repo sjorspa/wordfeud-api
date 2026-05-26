@@ -217,7 +217,8 @@ public class GameService : IGameService
             }
 
             // Calculate score
-            var scoreResult = CalculateScore(game, request);
+            var direction = DeriveDirection(request.Tiles);
+            var scoreResult = CalculateScore(game, request, direction);
             player.Score += scoreResult.TotalScore;
 
             // Draw new tiles
@@ -550,26 +551,23 @@ public class GameService : IGameService
             }
         }
 
-        // Validate direction is horizontal (0) or vertical (1)
-        if (request.Direction != 0 && request.Direction != 1)
-        {
-            return (false, "Direction must be 0 (horizontal) or 1 (vertical).");
-        }
+        // Derive direction from tile positions
+        var direction = DeriveDirection(request.Tiles);
 
         // Check tiles are in a line (horizontal or vertical)
-        if (!AreInLine(request.Tiles, request.Direction))
+        if (!AreInLine(request.Tiles, direction))
         {
             return (false, "All placed tiles must be in a straight line (horizontal or vertical).");
         }
 
         // Check for gaps in placement
-        if (HasGaps(request.Tiles, request.Direction))
+        if (HasGaps(request.Tiles, direction))
         {
             return (false, "Placed tiles must be contiguous (no gaps).");
         }
 
         // Validate formed words
-        var formedWords = GetFormedWords(game, request);
+        var formedWords = GetFormedWords(game, request, direction);
         foreach (var wordInfo in formedWords)
         {
             if (wordInfo.Word.Length < 2)
@@ -584,6 +582,27 @@ public class GameService : IGameService
         }
 
         return (true, string.Empty);
+    }
+
+    /// <summary>
+    /// Derives the placement direction from tile positions.
+    /// If all tiles share the same row → horizontal (0).
+    /// If all tiles share the same column → vertical (1).
+    /// </summary>
+    private static int DeriveDirection(List<TilePlacementDto> tiles)
+    {
+        if (tiles.Count <= 1)
+            return 0; // Default to horizontal for single tile
+
+        var allSameRow = tiles.All(t => t.Row == tiles[0].Row);
+        var allSameCol = tiles.All(t => t.Column == tiles[0].Column);
+
+        if (allSameRow)
+            return 0; // Horizontal
+        if (allSameCol)
+            return 1; // Vertical
+
+        return 0; // Default
     }
 
     /// <summary>
@@ -669,19 +688,19 @@ public class GameService : IGameService
     /// The main word is built from the request tile letters (not the board) so it works
     /// both during validation (before placement) and scoring (after placement).
     /// </summary>
-    private List<(string Word, bool IsCrossWord)> GetFormedWords(Game game, PlaceTilesRequest request)
+    private List<(string Word, bool IsCrossWord)> GetFormedWords(Game game, PlaceTilesRequest request, int direction)
     {
         var words = new List<(string Word, bool IsCrossWord)>();
 
         // Build the main word from request tile letters directly
-        var mainWord = request.Direction == 0
+        var mainWord = direction == 0
             ? BuildStringFromTiles(request.Tiles.OrderBy(t => t.Column).ToList(), request.BlankAssignments)
             : BuildStringFromTiles(request.Tiles.OrderBy(t => t.Row).ToList(), request.BlankAssignments);
 
         if (mainWord.Length >= 2)
             words.Add((mainWord, false));
 
-        if (request.Direction == 0)
+        if (direction == 0)
         {
             // Horizontal placement - cross words are vertical
             var row = request.Tiles[0].Row;
@@ -761,11 +780,11 @@ public class GameService : IGameService
     /// <summary>
     /// Calculates the score for a placement.
     /// </summary>
-    private (int TotalScore, List<string> FormedWords) CalculateScore(Game game, PlaceTilesRequest request)
+    private (int TotalScore, List<string> FormedWords) CalculateScore(Game game, PlaceTilesRequest request, int direction)
     {
         var totalScore = 0;
         var formedWordNames = new List<string>();
-        var formedWords = GetFormedWords(game, request);
+        var formedWords = GetFormedWords(game, request, direction);
 
         if (!formedWords.Any())
         {
@@ -787,7 +806,7 @@ public class GameService : IGameService
         foreach (var (word, isCrossWord) in formedWords)
         {
             var wordScore = isCrossWord
-                ? ScoreCrossWord(game, word, request)
+                ? ScoreCrossWord(game, word, request, direction)
                 : ScoreMainWord(game, request);
 
             totalScore += wordScore;
@@ -841,10 +860,10 @@ public class GameService : IGameService
     /// Scores a cross word by identifying which newly placed tiles form this word and scoring them.
     /// Cross words score base letter values only — no letter or word multipliers apply.
     /// </summary>
-    private int ScoreCrossWord(Game game, string word, PlaceTilesRequest request)
+    private int ScoreCrossWord(Game game, string word, PlaceTilesRequest request, int direction)
     {
         // Determine the perpendicular direction for the cross word
-        var isHorizontalMain = request.Direction == 0;
+        var isHorizontalMain = direction == 0;
 
         foreach (var tileDto in request.Tiles)
         {
