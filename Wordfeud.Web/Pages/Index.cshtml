@@ -571,11 +571,9 @@
                 @* Place tiles form *@
                 <form method="post" id="placeForm" style="margin-bottom: 10px;">
                     <label>From:
-                        <input type="number" asp-for="CurrentGame != null ? new PlaceTilesFormModel().StartRow : 0"
-                               name="StartRow" min="0" max="14" value="0" style="width: 50px;" />
+                        <input type="number" name="StartRow" min="0" max="14" value="0" style="width: 50px;" />
                         ,
-                        <input type="number" asp-for="CurrentGame != null ? new PlaceTilesFormModel().StartColumn : 0"
-                               name="StartColumn" min="0" max="14" value="0" style="width: 50px;" />
+                        <input type="number" name="StartColumn" min="0" max="14" value="0" style="width: 50px;" />
                     </label>
                     <label>Direction:
                         <select name="Direction">
