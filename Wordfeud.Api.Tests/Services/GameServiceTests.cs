@@ -205,9 +205,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -227,9 +224,6 @@ public class GameServiceTests
         var request = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>(),
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         // Act & Assert
@@ -249,9 +243,6 @@ public class GameServiceTests
         var request = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>(),
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         // Act & Assert
@@ -271,9 +262,6 @@ public class GameServiceTests
         var request = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>(),
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         // Act & Assert
@@ -292,9 +280,6 @@ public class GameServiceTests
         var request = new PlaceTilesRequest
         {
             Tiles = new List<TilePlacementDto>(),
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         // Act & Assert
@@ -326,9 +311,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
         await _service.PlaceTilesAsync(game.Id, playerId, firstRequest);
 
@@ -351,9 +333,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act & Assert
@@ -384,9 +363,6 @@ public class GameServiceTests
                     Column = 8
                 }
             },
-            StartRow = 7,
-            StartColumn = 8,
-            Direction = 0
         };
 
         // Act & Assert
@@ -428,9 +404,6 @@ public class GameServiceTests
                     Column = 8
                 }
             },
-            StartRow = 7,
-            StartColumn = 8,
-            Direction = 0
         };
 
         // Act & Assert
@@ -461,9 +434,6 @@ public class GameServiceTests
                     Column = 0
                 }
             },
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         // Act & Assert
@@ -495,9 +465,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
         await _service.PlaceTilesAsync(game.Id, playerId, firstRequest);
 
@@ -528,9 +495,6 @@ public class GameServiceTests
                     Column = 1
                 }
             },
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         // Act & Assert
@@ -574,9 +538,6 @@ public class GameServiceTests
                     Column = 8
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act & Assert - Place first tile at (7,7) which is valid, then try invalid word placement
@@ -600,9 +561,6 @@ public class GameServiceTests
                     Column = 0
                 }
             },
-            StartRow = 0,
-            StartColumn = 0,
-            Direction = 0
         };
 
         var ex = await Should.ThrowAsync<ArgumentException>(async () => await _service.PlaceTilesAsync(game.Id, nextPlayerId, invalidRequest));
@@ -640,9 +598,6 @@ public class GameServiceTests
                     Column = 8
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -685,9 +640,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 1
         };
 
         // Act
@@ -721,9 +673,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -757,9 +706,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -792,9 +738,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -838,9 +781,6 @@ public class GameServiceTests
                     Column = 8
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -872,9 +812,6 @@ public class GameServiceTests
                 new() { Letter = "G", IsBlank = false, TileId = hand[0].Id, Row = 7, Column = 7 },
                 new() { Letter = "A", IsBlank = false, TileId = hand[1].Id, Row = 7, Column = 8 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act: Place first word "GA"
@@ -897,9 +834,6 @@ public class GameServiceTests
             {
                 new() { Letter = "E", IsBlank = false, TileId = hand2[0].Id, Row = 6, Column = 8 }
             },
-            StartRow = 6,
-            StartColumn = 8,
-            Direction = 1
         };
 
         // Act: Place second tile creating a cross word on Double Letter square
@@ -931,9 +865,6 @@ public class GameServiceTests
                 new() { Letter = "D", IsBlank = false, TileId = hand[0].Id, Row = 7, Column = 6 },
                 new() { Letter = "E", IsBlank = false, TileId = hand[1].Id, Row = 7, Column = 7 }
             },
-            StartRow = 7,
-            StartColumn = 6,
-            Direction = 0
         };
 
         await _service.PlaceTilesAsync(game.Id, playerId, request1);
@@ -951,9 +882,6 @@ public class GameServiceTests
                 new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 5, Column = 7 },
                 new() { Letter = "N", IsBlank = false, TileId = hand2[1].Id, Row = 6, Column = 7 }
             },
-            StartRow = 5,
-            StartColumn = 7,
-            Direction = 1
         };
 
         // Act
@@ -995,9 +923,6 @@ public class GameServiceTests
                     Column = 7
                 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         // Act
@@ -1352,9 +1277,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 9 },
                 new() { Letter = "K", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 10 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, playerId, request1);
@@ -1376,9 +1298,6 @@ public class GameServiceTests
                 new() { Letter = "R", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 7 },
                 new() { Letter = "S", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 7 }
             },
-            StartRow = 8,
-            StartColumn = 7,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1399,9 +1318,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 10 },
                 new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 8, Column = 11 }
             },
-            StartRow = 8,
-            StartColumn = 8,
-            Direction = 0
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -1436,9 +1352,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 9 },
                 new() { Letter = "K", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 10 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -1463,9 +1376,6 @@ public class GameServiceTests
                 new() { Letter = "R", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 7 },
                 new() { Letter = "S", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 7 }
             },
-            StartRow = 8,
-            StartColumn = 7,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1492,9 +1402,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 6 },
                 new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 9, Column = 6 }
             },
-            StartRow = 6,
-            StartColumn = 6,
-            Direction = 1
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -1533,9 +1440,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 9 },
                 new() { Letter = "K", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 10 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -1554,9 +1458,6 @@ public class GameServiceTests
                 new() { Letter = "R", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 7 },
                 new() { Letter = "S", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 7 }
             },
-            StartRow = 8,
-            StartColumn = 7,
-            Direction = 1
         };
 
         await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1575,9 +1476,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 10 },
                 new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 8, Column = 11 }
             },
-            StartRow = 8,
-            StartColumn = 8,
-            Direction = 0
         };
 
         // Act & Assert: Should throw because "XELS" is not a valid Dutch word
@@ -1610,9 +1508,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 9 },
                 new() { Letter = "K", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 10 }
             },
-            StartRow = 7,
-            StartColumn = 7,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -1637,9 +1532,6 @@ public class GameServiceTests
                 new() { Letter = "R", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 7 },
                 new() { Letter = "S", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 7 }
             },
-            StartRow = 8,
-            StartColumn = 7,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1664,9 +1556,6 @@ public class GameServiceTests
                 new() { Letter = "L", IsBlank = false, TileId = hand3[2].Id, Row = 8, Column = 6 },
                 new() { Letter = "S", IsBlank = false, TileId = hand3[3].Id, Row = 9, Column = 6 }
             },
-            StartRow = 6,
-            StartColumn = 6,
-            Direction = 1
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -1692,9 +1581,6 @@ public class GameServiceTests
                 new() { Letter = "M", IsBlank = false, TileId = hand4[2].Id, Row = 11, Column = 5 },
                 new() { Letter = "P", IsBlank = false, TileId = hand4[3].Id, Row = 11, Column = 6 }
             },
-            StartRow = 11,
-            StartColumn = 3,
-            Direction = 0
         };
 
         var placedGame4 = await _service.PlaceTilesAsync(game.Id, player2AgainId, request4);
@@ -1729,9 +1615,6 @@ public class GameServiceTests
                 new() { Letter = "E", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 },
                 new() { Letter = "L", IsBlank = false, TileId = hand1[4].Id, Row = 7, Column = 9 }
             },
-            StartRow = 7,
-            StartColumn = 5,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -1756,9 +1639,6 @@ public class GameServiceTests
                 new() { Letter = "A", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 6 },
                 new() { Letter = "M", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 6 }
             },
-            StartRow = 8,
-            StartColumn = 6,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1784,9 +1664,6 @@ public class GameServiceTests
                 new() { Letter = "M", IsBlank = false, TileId = hand3[2].Id, Row = 5, Column = 6 },
                 new() { Letter = "P", IsBlank = false, TileId = hand3[3].Id, Row = 5, Column = 7 }
             },
-            StartRow = 5,
-            StartColumn = 4,
-            Direction = 0
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -1820,9 +1697,6 @@ public class GameServiceTests
                 new() { Letter = "I", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 8 },
                 new() { Letter = "S", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 9 }
             },
-            StartRow = 7,
-            StartColumn = 6,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -1847,9 +1721,6 @@ public class GameServiceTests
                 new() { Letter = "A", IsBlank = false, TileId = hand2[2].Id, Row = 10, Column = 6 },
                 new() { Letter = "M", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 6 }
             },
-            StartRow = 8,
-            StartColumn = 6,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1874,9 +1745,6 @@ public class GameServiceTests
                 new() { Letter = "U", IsBlank = false, TileId = hand3[2].Id, Row = 10, Column = 3 },
                 new() { Letter = "R", IsBlank = false, TileId = hand3[3].Id, Row = 10, Column = 4 }
             },
-            StartRow = 10,
-            StartColumn = 1,
-            Direction = 0
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -1911,9 +1779,6 @@ public class GameServiceTests
                 new() { Letter = "E", IsBlank = false, TileId = hand1[4].Id, Row = 7, Column = 9 },
                 new() { Letter = "R", IsBlank = false, TileId = hand1[5].Id, Row = 7, Column = 10 }
             },
-            StartRow = 7,
-            StartColumn = 5,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -1939,9 +1804,6 @@ public class GameServiceTests
                 new() { Letter = "E", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 6 },
                 new() { Letter = "R", IsBlank = false, TileId = hand2[4].Id, Row = 12, Column = 6 }
             },
-            StartRow = 8,
-            StartColumn = 6,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -1966,9 +1828,6 @@ public class GameServiceTests
                 new() { Letter = "J", IsBlank = false, TileId = hand3[2].Id, Row = 10, Column = 10 },
                 new() { Letter = "F", IsBlank = false, TileId = hand3[3].Id, Row = 11, Column = 10 }
             },
-            StartRow = 8,
-            StartColumn = 10,
-            Direction = 1
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -2001,9 +1860,6 @@ public class GameServiceTests
                 new() { Letter = "O", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 7 },
                 new() { Letter = "M", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 }
             },
-            StartRow = 7,
-            StartColumn = 5,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -2029,9 +1885,6 @@ public class GameServiceTests
                 new() { Letter = "O", IsBlank = false, TileId = hand2[3].Id, Row = 11, Column = 8 },
                 new() { Letter = "T", IsBlank = false, TileId = hand2[4].Id, Row = 12, Column = 8 }
             },
-            StartRow = 8,
-            StartColumn = 8,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -2059,9 +1912,6 @@ public class GameServiceTests
                 new() { Letter = "O", IsBlank = false, TileId = hand3[4].Id, Row = 13, Column = 6 },
                 new() { Letter = "N", IsBlank = false, TileId = hand3[5].Id, Row = 13, Column = 7 }
             },
-            StartRow = 13,
-            StartColumn = 2,
-            Direction = 0
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -2094,9 +1944,6 @@ public class GameServiceTests
                 new() { Letter = "A", IsBlank = false, TileId = hand1[1].Id, Row = 7, Column = 7 },
                 new() { Letter = "T", IsBlank = false, TileId = hand1[2].Id, Row = 7, Column = 8 }
             },
-            StartRow = 7,
-            StartColumn = 6,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -2121,9 +1968,6 @@ public class GameServiceTests
                 new() { Letter = "N", IsBlank = false, TileId = hand2[2].Id, Row = 5, Column = 7 },
                 new() { Letter = "D", IsBlank = false, TileId = hand2[3].Id, Row = 6, Column = 7 }
             },
-            StartRow = 3,
-            StartColumn = 7,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -2150,9 +1994,6 @@ public class GameServiceTests
                 new() { Letter = "E", IsBlank = false, TileId = hand3[3].Id, Row = 10, Column = 7 },
                 new() { Letter = "L", IsBlank = false, TileId = hand3[4].Id, Row = 10, Column = 8 }
             },
-            StartRow = 10,
-            StartColumn = 4,
-            Direction = 0
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -2186,9 +2027,6 @@ public class GameServiceTests
                 new() { Letter = "E", IsBlank = false, TileId = hand1[3].Id, Row = 7, Column = 8 },
                 new() { Letter = "R", IsBlank = false, TileId = hand1[4].Id, Row = 7, Column = 9 }
             },
-            StartRow = 7,
-            StartColumn = 5,
-            Direction = 0
         };
 
         var placedGame1 = await _service.PlaceTilesAsync(game.Id, player1Id, request1);
@@ -2213,9 +2051,6 @@ public class GameServiceTests
                 new() { Letter = "U", IsBlank = false, TileId = hand2[2].Id, Row = 5, Column = 7 },
                 new() { Letter = "R", IsBlank = false, TileId = hand2[3].Id, Row = 6, Column = 7 }
             },
-            StartRow = 3,
-            StartColumn = 7,
-            Direction = 1
         };
 
         var placedGame2 = await _service.PlaceTilesAsync(game.Id, player2Id, request2);
@@ -2242,9 +2077,6 @@ public class GameServiceTests
                 new() { Letter = "D", IsBlank = false, TileId = hand3[3].Id, Row = 12, Column = 8 },
                 new() { Letter = "E", IsBlank = false, TileId = hand3[4].Id, Row = 12, Column = 9 }
             },
-            StartRow = 12,
-            StartColumn = 5,
-            Direction = 0
         };
 
         var placedGame3 = await _service.PlaceTilesAsync(game.Id, player1AgainId, request3);
@@ -2270,9 +2102,6 @@ public class GameServiceTests
                 new() { Letter = "H", IsBlank = false, TileId = hand4[3].Id, Row = 12, Column = 10 },
                 new() { Letter = "T", IsBlank = false, TileId = hand4[4].Id, Row = 13, Column = 10 }
             },
-            StartRow = 9,
-            StartColumn = 10,
-            Direction = 1
         };
 
         var placedGame4 = await _service.PlaceTilesAsync(game.Id, player2AgainId, request4);

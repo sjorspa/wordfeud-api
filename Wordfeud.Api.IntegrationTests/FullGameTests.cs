@@ -68,9 +68,6 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         var placeResponse1 = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest1);
@@ -177,9 +174,6 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
         var invalidPlaceResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player1.Id}", new
         {
             tiles = new[] { new { letter = "X", isBlank = false, tileId = "test", row = 8, column = 8 } },
-            startRow = 8,
-            startColumn = 8,
-            direction = 0
         });
         invalidPlaceResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
 

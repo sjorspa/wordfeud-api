@@ -28,9 +28,6 @@ public class EdgeCaseTests : IntegrationTestBase
         var placeRequest = new
         {
             tiles = new object[] { },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -67,9 +64,6 @@ public class EdgeCaseTests : IntegrationTestBase
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Place first tile
@@ -105,9 +99,6 @@ public class EdgeCaseTests : IntegrationTestBase
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -145,9 +136,6 @@ public class EdgeCaseTests : IntegrationTestBase
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         await Client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest1);
@@ -183,9 +171,6 @@ public class EdgeCaseTests : IntegrationTestBase
                     column = 0
                 }
             },
-            startRow = 0,
-            startColumn = 0,
-            direction = 0
         };
 
         // Act
@@ -215,9 +200,6 @@ public class EdgeCaseTests : IntegrationTestBase
                 new { letter = "A", isBlank = false, tileId = player.Hand[0].Id, row = 7, column = 7 },
                 new { letter = "B", isBlank = false, tileId = player.Hand[1].Id, row = 8, column = 8 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -247,9 +229,6 @@ public class EdgeCaseTests : IntegrationTestBase
                 new { letter = "A", isBlank = false, tileId = player.Hand[0].Id, row = 7, column = 7 },
                 new { letter = "B", isBlank = false, tileId = player.Hand[1].Id, row = 7, column = 9 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -278,9 +257,6 @@ public class EdgeCaseTests : IntegrationTestBase
             {
                 new { letter = "A", isBlank = false, tileId = player.Hand[0].Id, row = 0, column = 0 }
             },
-            startRow = 0,
-            startColumn = 0,
-            direction = 0
         };
 
         // Act
@@ -309,9 +285,6 @@ public class EdgeCaseTests : IntegrationTestBase
             {
                 new { letter = "A", isBlank = false, tileId = otherPlayer.Hand[0].Id, row = 7, column = 7 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act - try to place tiles as the non-current player
@@ -322,7 +295,7 @@ public class EdgeCaseTests : IntegrationTestBase
     }
 
     [Fact]
-    public async Task PostPlaceTiles_ShouldReturn400WhenInvalidDirection()
+    public async Task PostPlaceTiles_ShouldReturn400WhenTilesNotInStraightLine()
     {
         // Arrange
         var createResponse = await Client.PostAsJsonAsync("/api/games", new { PlayerName = "Player1" });
@@ -334,15 +307,14 @@ public class EdgeCaseTests : IntegrationTestBase
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
         var playerId = player.Id;
 
+        // Place tiles in a non-straight-line pattern (diagonal) - should fail validation
         var placeRequest = new
         {
             tiles = new[]
             {
-                new { letter = "A", isBlank = false, tileId = player.Hand[0].Id, row = 7, column = 7 }
-            },
-            startRow = 7,
-            startColumn = 7,
-            direction = 99
+                new { letter = "A", isBlank = false, tileId = player.Hand[0].Id, row = 7, column = 7 },
+                new { letter = "B", isBlank = false, tileId = player.Hand[1].Id, row = 8, column = 8 }
+            }
         };
 
         // Act
@@ -511,9 +483,6 @@ public class EdgeCaseTests : IntegrationTestBase
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act
@@ -780,9 +749,6 @@ public class EdgeCaseTests : IntegrationTestBase
                     column = 7
                 }
             },
-            startRow = 7,
-            startColumn = 7,
-            direction = 0
         };
 
         // Act

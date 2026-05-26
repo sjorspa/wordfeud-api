@@ -30,12 +30,12 @@ public class JoinGameRequest
 
 /// <summary>
 /// Request DTO for placing tiles on the board.
-/// Direction is derived from tile coordinates (horizontal if all rows match, vertical if all columns match).
+/// Each tile in the Tiles array carries its own Row and Column from drag-and-drop.
 /// </summary>
 public class PlaceTilesRequest
 {
     /// <summary>
-    /// The tiles to place.
+    /// The tiles to place, each with its own Row and Column.
     /// </summary>
     [Required]
     [MinLength(1, ErrorMessage = "At least one tile must be placed.")]
