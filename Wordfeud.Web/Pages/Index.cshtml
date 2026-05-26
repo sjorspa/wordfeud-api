@@ -431,6 +431,70 @@
         .legend-box.tls { background: #6090e0; }
         .legend-box.dls { background: #90c0f0; }
 
+        /* Setup options */
+        .setup-options {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: start;
+            margin: 20px 0;
+        }
+
+        .setup-option {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #0f3460;
+        }
+
+        .setup-option h3 {
+            color: #f0c040;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .setup-option input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            background: #1a1a2e;
+            color: #eee;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .setup-option input::placeholder {
+            color: #666;
+        }
+
+        .setup-option button {
+            width: 100%;
+            padding: 12px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .setup-option button:hover {
+            background: #c73e54;
+        }
+
+        .setup-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 1.5rem;
+            padding-top: 60px;
+        }
+
         /* Debug panel */
         .debug-panel {
             margin-top: 30px;
@@ -515,15 +579,33 @@
     <div class="container">
         <h1>Wordfeud</h1>
 
-        @if (Model.CurrentGame == null)
+        @if (string.IsNullOrEmpty(Model.CurrentGame?.Id))
         {
             <div class="setup-panel">
                 <h2>Start a Game</h2>
-                <form method="post">
-                    <input asp-for="PlayerName" placeholder="Enter your name" />
-                    <button type="submit" name="action" value="create">Create Game</button>
-                </form>
-                <p style="color: #aaa;">Create a game, then share the Game ID with your opponent.</p>
+                
+                <div class="setup-options">
+                    <div class="setup-option">
+                        <h3>Create New Game</h3>
+                        <form method="post">
+                            <input asp-for="PlayerName" placeholder="Enter your name" />
+                            <button type="submit" name="action" value="create">Create Game</button>
+                        </form>
+                    </div>
+                    
+                    <div class="setup-divider">or</div>
+                    
+                    <div class="setup-option">
+                        <h3>Join Existing Game</h3>
+                        <form method="post">
+                            <input asp-for="PlayerName" placeholder="Enter your name" />
+                            <input asp-for="GameId" placeholder="Enter Game ID" />
+                            <button type="submit" name="action" value="join">Join Game</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <p style="color: #aaa; margin-top: 20px;">Create a game to start playing, or join an existing game by entering the Game ID.</p>
             </div>
         }
         else
