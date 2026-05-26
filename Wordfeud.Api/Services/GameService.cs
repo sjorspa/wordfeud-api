@@ -524,8 +524,8 @@ public class GameService : IGameService
     {
         // Check if it's the first move — must cross center (7,7)
         var hasAnyPlacedTile = false;
-        for (var r = 0; r < 15; r++)
-            for (var c = 0; c < 15; c++)
+        for (var r = 0; r < BoardConfiguration.BoardSize; r++)
+            for (var c = 0; c < BoardConfiguration.BoardSize; c++)
                 if (game.Board[r, c] != null)
                     hasAnyPlacedTile = true;
 
@@ -597,7 +597,7 @@ public class GameService : IGameService
             {
                 var r = tile.Row + dr;
                 var c = tile.Column + dc;
-                while (r >= 0 && r < 15 && c >= 0 && c < 15)
+                while (r >= 0 && r < BoardConfiguration.BoardSize && c >= 0 && c < BoardConfiguration.BoardSize)
                 {
                     if (game.Board[r, c] != null)
                         return true;
@@ -694,7 +694,7 @@ public class GameService : IGameService
                 r++;
 
                 // Build word
-                while (r < 15 && game.Board[r, col] != null)
+                while (r < BoardConfiguration.BoardSize && game.Board[r, col] != null)
                 {
                     var t = game.Board[r, col]!;
                     crossWord.Append(t.BlankRepresentation ?? t.Letter);
@@ -721,7 +721,7 @@ public class GameService : IGameService
                 c++;
 
                 // Build word
-                while (c < 15 && game.Board[row, c] != null)
+                while (c < BoardConfiguration.BoardSize && game.Board[row, c] != null)
                 {
                     var t = game.Board[row, c]!;
                     crossWord.Append(t.BlankRepresentation ?? t.Letter);
@@ -836,12 +836,10 @@ public class GameService : IGameService
 
     /// <summary>
     /// Scores a cross word by identifying which newly placed tiles form this word and scoring them.
+    /// Cross words score base letter values only — no letter or word multipliers apply.
     /// </summary>
     private int ScoreCrossWord(Game game, string word, PlaceTilesRequest request)
     {
-        var letterScore = 0;
-        var wordMultiplier = 1;
-
         // Determine the perpendicular direction for the cross word
         var isHorizontalMain = request.Direction == 0;
 
@@ -854,28 +852,12 @@ public class GameService : IGameService
             if (wordBuilder.ToString() == word)
             {
                 var tile = game.Board[tileDto.Row, tileDto.Column];
-                var letterPoints = tile?.Points ?? 0;
-
-                // Apply letter bonuses (Wordfeud rule: letter bonuses apply to ALL words the tile crosses)
-                var bonus = BoardConfiguration.GetBonusType(tileDto.Row, tileDto.Column);
-                if (bonus == BonusType.DoubleLetter)
-                    letterPoints *= 2;
-                else if (bonus == BonusType.TripleLetter)
-                    letterPoints *= 3;
-
-                letterScore += letterPoints;
-
-                // Apply word multipliers (only to newly placed tiles)
-                if (bonus == BonusType.DoubleWord)
-                    wordMultiplier *= 2;
-                else if (bonus == BonusType.TripleWord)
-                    wordMultiplier *= 3;
-
-                break;
+                // Wordfeud rule: cross words score base letter value only, no multipliers
+                return tile?.Points ?? 0;
             }
         }
 
-        return letterScore * wordMultiplier;
+        return 0;
     }
 
     /// <summary>
@@ -892,7 +874,7 @@ public class GameService : IGameService
         r++;
 
         // Build word downward from this tile
-        while (r < 15 && game.Board[r, startCol] != null)
+        while (r < BoardConfiguration.BoardSize && game.Board[r, startCol] != null)
         {
             var tile = game.Board[r, startCol];
             wordBuilder.Append(tile?.BlankRepresentation ?? tile?.Letter ?? string.Empty);
@@ -916,7 +898,7 @@ public class GameService : IGameService
         c++;
 
         // Build word rightward from this tile
-        while (c < 15 && game.Board[startRow, c] != null)
+        while (c < BoardConfiguration.BoardSize && game.Board[startRow, c] != null)
         {
             var tile = game.Board[startRow, c];
             wordBuilder.Append(tile?.BlankRepresentation ?? tile?.Letter ?? string.Empty);

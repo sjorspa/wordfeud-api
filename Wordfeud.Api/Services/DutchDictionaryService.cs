@@ -59,8 +59,11 @@ public class DutchDictionaryService : IDutchDictionaryService
     public bool IsInitialized => _isInitialized;
 
     /// <inheritdoc />
-    public bool Contains(string word)
+    public bool Contains(string? word)
     {
+        if (string.IsNullOrEmpty(word))
+            return false;
+
         if (!_isInitialized)
         {
             _logger.LogWarning("Dictionary not initialized yet. Using fallback validation.");
