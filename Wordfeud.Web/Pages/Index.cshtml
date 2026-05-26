@@ -587,9 +587,9 @@
                 <div class="setup-options">
                     <div class="setup-option">
                         <h3>Create New Game</h3>
-                        <form method="post">
+                        <form method="post" asp-page-handler="CreateGame">
                             <input asp-for="PlayerName" placeholder="Enter your name" />
-                            <button type="submit" name="CreateGame">Create Game</button>
+                            <button type="submit">Create Game</button>
                         </form>
                     </div>
                     
@@ -597,10 +597,10 @@
                     
                     <div class="setup-option">
                         <h3>Join Existing Game</h3>
-                        <form method="post">
+                        <form method="post" asp-page-handler="JoinGame">
                             <input asp-for="PlayerName" placeholder="Enter your name" />
                             <input asp-for="GameId" placeholder="Enter Game ID" />
-                            <button type="submit" name="JoinGame">Join Game</button>
+                            <button type="submit">Join Game</button>
                         </form>
                     </div>
                 </div>
