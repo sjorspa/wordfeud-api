@@ -1,5 +1,6 @@
 @page
 @using Wordfeud.Web.Pages
+@using System.Text.Json
 @model IndexModel
 @{
     ViewData["Title"] = "Wordfeud";
@@ -429,6 +430,85 @@
         .legend-box.dws { background: #f09060; }
         .legend-box.tls { background: #6090e0; }
         .legend-box.dls { background: #90c0f0; }
+
+        /* Debug panel */
+        .debug-panel {
+            margin-top: 30px;
+            border: 2px solid #e94560;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #0f0f23;
+        }
+
+        .debug-header {
+            padding: 12px 20px;
+            background: #e94560;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .debug-header:hover {
+            background: #c73e54;
+        }
+
+        .debug-content {
+            padding: 20px;
+            display: none;
+            max-height: 600px;
+            overflow: auto;
+        }
+
+        .debug-content.visible {
+            display: block;
+        }
+
+        .debug-content pre {
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #00ff88;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .debug-info {
+            margin-top: 15px;
+            padding: 15px;
+            background: #16213e;
+            border-radius: 8px;
+            border: 1px solid #0f3460;
+        }
+
+        .debug-info h4 {
+            color: #f0c040;
+            margin-bottom: 10px;
+        }
+
+        .debug-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .debug-info td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .debug-info td:first-child {
+            color: #aaa;
+            font-weight: bold;
+            width: 180px;
+        }
+
+        .debug-info td:last-child {
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -628,8 +708,88 @@
         }
     </div>
 
+    @* Debug Panel *@
+    <div class="container">
+        <div class="debug-panel">
+            <div class="debug-header" onclick="toggleDebug()">
+                <span>🔍 Debug Panel (Game State)</span>
+                <span id="debugToggle">▼</span>
+            </div>
+            <div class="debug-content" id="debugContent">
+                @if (Model.CurrentGame != null)
+                {
+                    <div class="debug-info">
+                        <h4>Game Details</h4>
+                        <table>
+                            <tr><td>Game ID</td><td>@Model.CurrentGame.Id</td></tr>
+                            <tr><td>Status</td><td>@Model.CurrentGame.Status</td></tr>
+                            <tr><td>Current Player</td><td>@(Model.CurrentGame.CurrentPlayerId ?? "None")</td></tr>
+                            <tr><td>Move Number</td><td>@Model.CurrentGame.MoveNumber</td></tr>
+                            <tr><td>Bag Count</td><td>@Model.CurrentGame.BagCount</td></tr>
+                            <tr><td>Consecutive Passes</td><td>@Model.CurrentGame.ConsecutivePasses</td></tr>
+                            <tr><td>Players Count</td><td>@Model.CurrentGame.Players.Count</td></tr>
+                            <tr><td>Board Tiles Count</td><td>@Model.CurrentGame.BoardTiles.Count</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="debug-info">
+                        <h4>Players</h4>
+                        <table>
+                            @for (var i = 0; i < Model.CurrentGame.Players.Count; i++)
+                            {
+                                var p = Model.CurrentGame.Players[i];
+                                <tr>
+                                    <td>Player @(i + 1)</td>
+                                    <td>@p.Name (ID: @p.Id, Score: @p.Score, Hand: @p.Hand.Count tiles)</td>
+                                </tr>
+                            }
+                        </table>
+                    </div>
+
+                    <div class="debug-info">
+                        <h4>Board Tiles</h4>
+                        @if (Model.CurrentGame.BoardTiles.Count > 0)
+                        {
+                            <table>
+                                @foreach (var tile in Model.CurrentGame.BoardTiles)
+                                {
+                                    <tr>
+                                        <td>@(tile.Row),@(tile.Column)</td>
+                                        <td>@(tile.IsBlank ? "?" : tile.Letter) (@tile.Points pts, Blank: @(tile.IsBlank ? "Yes" : "No"))</td>
+                                    </tr>
+                                }
+                            </table>
+                        }
+                        else
+                        {
+                            <p style="color: #aaa;">No tiles on board yet.</p>
+                        }
+                    </div>
+
+                    <div class="debug-info">
+                        <h4>Raw JSON Response</h4>
+                        <pre id="rawJson">@JsonSerializer.Serialize(Model.CurrentGame, new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase })</pre>
+                    </div>
+                }
+                else
+                {
+                    <div class="debug-info">
+                        <p style="color: #aaa;">No active game. Create a game to see debug information.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
     <script>
         var selectedTiles = [];
+
+        function toggleDebug() {
+            var content = document.getElementById('debugContent');
+            var toggle = document.getElementById('debugToggle');
+            content.classList.toggle('visible');
+            toggle.textContent = content.classList.contains('visible') ? '▲' : '▼';
+        }
 
         function selectTile(tileId) {
             var index = selectedTiles.indexOf(tileId);
