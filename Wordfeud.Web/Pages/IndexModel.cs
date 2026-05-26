@@ -11,6 +11,7 @@ namespace Wordfeud.Web.Pages;
 public class IndexModel : PageModel
 {
     private readonly HttpClient _httpClient;
+    private readonly IConfiguration _configuration;
 
     /// <summary>
     /// Gets or sets the current game state.
@@ -33,11 +34,12 @@ public class IndexModel : PageModel
     /// <summary>
     /// Gets the API base URL.
     /// </summary>
-    private string ApiBaseUrl => "http://localhost:8080/api";
+    private string ApiBaseUrl => _configuration["ApiUrl"] ?? "http://localhost:8080" + "/api";
 
-    public IndexModel(IHttpClientFactory httpClientFactory)
+    public IndexModel(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
-        _httpClient = httpClientFactory.CreateClient("Api");
+        this._httpClient = httpClientFactory.CreateClient("Api");
+        this._configuration = configuration;
     }
 
     /// <summary>

@@ -21,6 +21,30 @@ services:
     networks:
       - wordfeud-network
 
+  wordfeud-web:
+    build:
+      context: .
+      dockerfile: Wordfeud.Web/Dockerfile
+    container_name: wordfeud-web
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8081
+      - ApiUrl=http://wordfeud-api:8080
+    depends_on:
+      wordfeud-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - wordfeud-network
+
 networks:
   wordfeud-network:
     driver: bridge
