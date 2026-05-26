@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 
 namespace Wordfeud.Web.Pages;
 
@@ -300,39 +301,145 @@ public class IndexModel : PageModel
 
 /// <summary>
 /// Model for the game state returned from the API.
+/// The API serializes the board as a 2D array under the key "board",
+/// not as a flat list of BoardTileViewModel objects.
+/// Properties use [JsonPropertyName] to match the API's camelCase JSON.
 /// </summary>
 public class GameViewModel
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the game.
+    /// </summary>
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the current status of the game.
+    /// </summary>
+    [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the ID of the current player whose turn it is.
+    /// </summary>
+    [JsonPropertyName("currentPlayerId")]
     public string? CurrentPlayerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the players in this game.
+    /// </summary>
+    [JsonPropertyName("players")]
     public List<PlayerViewModel> Players { get; set; } = new();
-    public List<BoardTileViewModel> BoardTiles { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the board as a 2D array (15x15) from the API.
+    /// The API serializes the Board using BoardConverter as a 2D array under the key "board".
+    /// </summary>
+    [JsonPropertyName("board")]
+    public List<List<TileViewModel?>>? Board { get; set; }
+
+    /// <summary>
+    /// Gets the board tiles as a flat list, converted from the 2D board array.
+    /// This provides a convenient interface for the Razor template to access placed tiles.
+    /// </summary>
+    [JsonIgnore]
+    public List<BoardTileViewModel> BoardTiles
+    {
+        get
+        {
+            if (Board == null)
+            {
+                return new List<BoardTileViewModel>();
+            }
+
+            var result = new List<BoardTileViewModel>();
+            for (var row = 0; row < Board.Count; row++)
+            {
+                var rowTiles = Board[row];
+                if (rowTiles == null)
+                {
+                    continue;
+                }
+
+                for (var col = 0; col < rowTiles.Count; col++)
+                {
+                    var tile = rowTiles[col];
+                    if (tile != null)
+                    {
+                        result.Add(new BoardTileViewModel
+                        {
+                            Row = row,
+                            Column = col,
+                            Letter = tile.Letter,
+                            IsBlank = tile.IsBlank,
+                            Points = tile.Points,
+                            BonusType = string.Empty
+                        });
+                    }
+                }
+            }
+
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the number of tiles remaining in the bag.
+    /// </summary>
+    [JsonPropertyName("bagCount")]
     public int BagCount { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of consecutive passes.
+    /// </summary>
+    [JsonPropertyName("consecutivePasses")]
     public int ConsecutivePasses { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current move number.
+    /// </summary>
+    [JsonPropertyName("moveNumber")]
     public int MoveNumber { get; set; }
 }
 
 /// <summary>
 /// Model for a player.
+/// Properties use [JsonPropertyName] to match the API's camelCase JSON.
 /// </summary>
 public class PlayerViewModel
 {
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("score")]
     public int Score { get; set; }
+
+    [JsonPropertyName("hand")]
     public List<TileViewModel> Hand { get; set; } = new();
 }
 
 /// <summary>
 /// Model for a tile.
+/// Properties use [JsonPropertyName] to match the API's camelCase JSON.
 /// </summary>
 public class TileViewModel
 {
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("letter")]
     public string Letter { get; set; } = string.Empty;
+
+    [JsonPropertyName("blankRepresentation")]
     public string BlankRepresentation { get; set; } = string.Empty;
+
+    [JsonPropertyName("points")]
     public int Points { get; set; }
+
+    [JsonPropertyName("isBlank")]
     public bool IsBlank { get; set; }
 }
 
