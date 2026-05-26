@@ -98,6 +98,17 @@ public class IndexModel : PageModel
     }
 
     /// <summary>
+    /// Loads the game state on page load if a GameId is provided.
+    /// </summary>
+    public async Task OnGet()
+    {
+        if (!string.IsNullOrWhiteSpace(GameId))
+        {
+            CurrentGame = await _httpClient.GetFromJsonAsync<GameViewModel>($"{ApiBaseUrl}/games/{GameId}");
+        }
+    }
+
+    /// <summary>
     /// Refreshes the current game state.
     /// </summary>
     public async Task<IActionResult> OnGetRefresh()
