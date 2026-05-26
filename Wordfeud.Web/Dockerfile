@@ -18,7 +18,7 @@ COPY Wordfeud.Web/ Wordfeud.Web/
 
 # Build and publish
 WORKDIR /src/Wordfeud.Web
-RUN dotnet publish -c Release -o /app/publish --no-restore
+RUN dotnet publish -c Release -o /app/publish --no-restore /p:ErrorOnDuplicatePublishOutputFiles=false
 
 # ============================
 # Runtime stage
