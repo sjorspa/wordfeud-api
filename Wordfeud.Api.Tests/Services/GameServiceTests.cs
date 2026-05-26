@@ -44,7 +44,7 @@ public class GameServiceTests
         game.Players[0].Hand.Should().HaveCount(7);
         game.Players[0].Score.Should().Be(0);
         game.TileBag.Should().HaveCount(97); // 104 total - 7 dealt
-        game.CurrentPlayerId.Should().BeNull();
+        game.CurrentPlayerId.Should().Be(game.Players[0].Id);
         game.ConsecutivePasses.Should().Be(0);
         game.MoveNumber.Should().Be(0);
     }

@@ -133,9 +133,13 @@
             font-weight: bold;
             border-radius: 6px;
             border: 2px solid #c9a86c;
-            cursor: pointer;
+            cursor: grab;
             user-select: none;
             position: relative;
+        }
+
+        .rack-tile:active {
+            cursor: grabbing;
         }
 
         .rack-tile:hover {
@@ -189,6 +193,17 @@
             border-radius: 4px;
             background: #e8dcc8;
             position: relative;
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .board-cell.drop-hover {
+            box-shadow: inset 0 0 0 3px #f0c040;
+            background-color: #fff8dc;
+        }
+
+        .board-cell.drop-invalid {
+            box-shadow: inset 0 0 0 3px #e94560;
+            background-color: #ffe0e0;
         }
 
         .board-cell.tws {
@@ -237,6 +252,77 @@
             right: 2px;
             font-size: 0.5rem;
             color: #666;
+        }
+
+        /* Placed tiles preview */
+        .placed-tiles {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+            min-height: 50px;
+            padding: 8px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            border: 1px dashed #0f3460;
+        }
+
+        .placed-tile {
+            width: 40px;
+            height: 40px;
+            background: #f0c040;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 6px;
+            border: 2px solid #e94560;
+            cursor: pointer;
+            position: relative;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .placed-tile:hover {
+            transform: scale(1.1);
+        }
+
+        .placed-tile .remove-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 16px;
+            height: 16px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 0.6rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .placed-tile .pos-info {
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.45rem;
+            color: #fff;
+            background: #0f3460;
+            padding: 0 2px;
+            border-radius: 2px;
+            white-space: nowrap;
+        }
+
+        @@keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         /* Action bar */
@@ -651,8 +737,9 @@
                         {
                             var isBlankClass = tile.IsBlank ? "blank-tile" : "";
                             <div class="rack-tile @isBlankClass"
-                                 onclick="selectTile('@tile.Id')"
-                                 title="@tile.Letter (@tile.Points) pts">
+                                 draggable="true"
+                                 ondragstart="handleDragStart(event, '@tile.Id', '@(tile.IsBlank ? "?" : tile.Letter)', @tile.Points, @tile.IsBlank)"
+                                 title="Drag to board or click to select">
                                 @(tile.IsBlank ? "?" : tile.Letter)
                                 <span class="points">@tile.Points</span>
                             </div>
@@ -690,7 +777,12 @@
                                     displayText = boardTile.IsBlank ? (boardTile.BlankRepresentation ?? "?") : boardTile.Letter;
                                 }
 
-                                <div class="@cellClass">
+                                <div class="@cellClass"
+                                     data-row="@row"
+                                     data-col="@col"
+                                     ondragover="event.preventDefault(); this.classList.add('drop-hover');"
+                                     ondragleave="this.classList.remove('drop-hover');"
+                                     ondrop="handleDrop(event, @row, @col);">
                                     @if (!string.IsNullOrEmpty(displayText))
                                     {
                                         <span>@displayText</span>
@@ -727,8 +819,9 @@
                             {
                                 var isBlankClass = tile.IsBlank ? "blank-tile" : "";
                                 <div class="rack-tile @isBlankClass"
-                                     onclick="selectTile('@tile.Id')"
-                                     title="@tile.Letter (@tile.Points) pts">
+                                     draggable="true"
+                                     ondragstart="handleDragStart(event, '@tile.Id', '@(tile.IsBlank ? "?" : tile.Letter)', @tile.Points, @tile.IsBlank)"
+                                     title="Drag to board or click to select">
                                     @(tile.IsBlank ? "?" : tile.Letter)
                                     <span class="points">@tile.Points</span>
                                 </div>
@@ -745,20 +838,12 @@
 
                 @* Place tiles form *@
                 <form method="post" id="placeForm" style="margin-bottom: 10px;">
-                    <label>From:
-                        <input type="number" name="StartRow" min="0" max="14" value="0" style="width: 50px;" />
-                        ,
-                        <input type="number" name="StartColumn" min="0" max="14" value="0" style="width: 50px;" />
-                    </label>
-                    <label>Direction:
-                        <select name="Direction">
-                            <option value="horizontal">Horizontal →</option>
-                            <option value="vertical">Vertical ↓</option>
-                        </select>
-                    </label>
-                    <br /><br />
+                    <div class="placed-tiles" id="placedTilesPreview">
+                        <span style="color: #aaa; font-size: 0.85rem;">Drag tiles from your rack onto the board</span>
+                    </div>
                     <button type="submit" name="action" value="place" class="btn-place">Place Tiles</button>
                     <input type="hidden" name="SelectedTiles" id="selectedTilesInput" />
+                    <input type="hidden" name="TilePositions" id="tilePositionsInput" />
                 </form>
 
                 @* Swap tiles form *@
@@ -877,7 +962,8 @@
     </div>
 
     <script>
-        var selectedTiles = [];
+        // Drag-and-drop state
+        var placedTiles = []; // Array of { tileId, letter, points, isBlank, row, col }
 
         function toggleDebug() {
             var content = document.getElementById('debugContent');
@@ -886,29 +972,116 @@
             toggle.textContent = content.classList.contains('visible') ? '▲' : '▼';
         }
 
-        function selectTile(tileId) {
-            var index = selectedTiles.indexOf(tileId);
-            if (index > -1) {
-                selectedTiles.splice(index, 1);
-            } else {
-                selectedTiles.push(tileId);
-            }
-            document.getElementById('selectedTilesInput').value = selectedTiles.join(',');
-
-            // Update visual selection
-            document.querySelectorAll('.rack-tile').forEach(function(el) {
-                el.classList.remove('selected');
-            });
-            event.target.closest('.rack-tile').classList.add('selected');
+        // Handle drag start from rack
+        function handleDragStart(event, tileId, letter, points, isBlank) {
+            event.dataTransfer.setData('text/plain', JSON.stringify({
+                tileId: tileId,
+                letter: letter,
+                points: points,
+                isBlank: isBlank
+            }));
+            event.dataTransfer.effectAllowed = 'move';
         }
 
-        function checkBlankTiles() {
-            // Check if any selected tiles are blanks and need assignment
-            var hasBlanks = false;
-            selectedTiles.forEach(function(id) {
-                // This would need to be populated from server-side data
+        // Handle drop on board cell
+        function handleDrop(event, row, col) {
+            event.preventDefault();
+            event.target.closest('.board-cell').classList.remove('drop-hover');
+
+            var data = event.dataTransfer.getData('text/plain');
+            if (!data) return;
+
+            var tileInfo = JSON.parse(data);
+
+            // Check if a tile is already placed on this cell
+            var existingIndex = placedTiles.findIndex(function(t) { return t.row === row && t.col === col; });
+            if (existingIndex !== -1) {
+                // Replace the existing tile
+                placedTiles[existingIndex] = {
+                    tileId: tileInfo.tileId,
+                    letter: tileInfo.letter,
+                    points: tileInfo.points,
+                    isBlank: tileInfo.isBlank,
+                    row: row,
+                    col: col
+                };
+            } else {
+                // Add new tile
+                placedTiles.push({
+                    tileId: tileInfo.tileId,
+                    letter: tileInfo.letter,
+                    points: tileInfo.points,
+                    isBlank: tileInfo.isBlank,
+                    row: row,
+                    col: col
+                });
+            }
+
+            updatePlacedTilesPreview();
+        }
+
+        // Update the placed tiles preview area
+        function updatePlacedTilesPreview() {
+            var container = document.getElementById('placedTilesPreview');
+            if (placedTiles.length === 0) {
+                container.innerHTML = '<span style="color: #aaa; font-size: 0.85rem;">Drag tiles from your rack onto the board</span>';
+                document.getElementById('selectedTilesInput').value = '';
+                return;
+            }
+
+            var html = '';
+            placedTiles.forEach(function(tile, index) {
+                var displayLetter = tile.isBlank ? '?' : tile.letter;
+                html += '<div class="placed-tile" title="' + displayLetter + ' (' + tile.points + ' pts) at ' + tile.row + ',' + tile.col + '">'
+                    + displayLetter
+                    + '<span class="points">' + tile.points + '</span>'
+                    + '<span class="pos-info">' + tile.row + ',' + tile.col + '</span>'
+                    + '<button class="remove-btn" onclick="removePlacedTile(' + index + ')">✕</button>'
+                    + '</div>';
             });
-            return !hasBlanks;
+            container.innerHTML = html;
+
+            // Update hidden input with tile IDs (comma-separated)
+            document.getElementById('selectedTilesInput').value = placedTiles.map(function(t) { return t.tileId; }).join(',');
+            // Update TilePositions with JSON of {row, col} for each tile
+            document.getElementById('tilePositionsInput').value = JSON.stringify(placedTiles.map(function(t) { return { TileId: t.tileId, Row: t.row, Column: t.col }; }));
+        }
+
+        // Remove a placed tile
+        function removePlacedTile(index) {
+            placedTiles.splice(index, 1);
+            updatePlacedTilesPreview();
+        }
+
+        function selectTile(tileId) {
+            var index = placedTiles.findIndex(function(t) { return t.tileId === tileId; });
+            if (index > -1) {
+                placedTiles.splice(index, 1);
+                updatePlacedTilesPreview();
+            } else {
+                // Fallback: click to add tile at center of board (7,7) if not already placed
+                var existing = placedTiles.find(function(t) { return t.tileId === tileId; });
+                if (!existing) {
+                    // Find a free tile from the rack with this ID
+                    var rackTiles = document.querySelectorAll('.rack-tile');
+                    rackTiles.forEach(function(el) {
+                        if (el.getAttribute('data-tile-id') === tileId && !el.classList.contains('placed')) {
+                            el.classList.add('placed');
+                            el.style.opacity = '0.4';
+                            // Add to placed tiles at a default position
+                            placedTiles.push({
+                                tileId: tileId,
+                                letter: el.textContent.trim().charAt(0),
+                                points: parseInt(el.getAttribute('data-points') || '0'),
+                                isBlank: el.classList.contains('blank-tile'),
+                                row: 7,
+                                col: 7
+                            });
+                            updatePlacedTilesPreview();
+                        }
+                    });
+                }
+            }
         }
     </script>
 </body>

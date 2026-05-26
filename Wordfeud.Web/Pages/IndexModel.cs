@@ -211,7 +211,7 @@ public class IndexModel : PageModel
     }
 
     /// <summary>
-    /// Places tiles on the board.
+    /// Places tiles on the board via drag-and-drop.
     /// </summary>
     public async Task<IActionResult> OnPostPlace([FromForm] PlaceTilesFormModel model)
     {
@@ -233,23 +233,43 @@ public class IndexModel : PageModel
             return Page();
         }
 
-        var direction = model.Direction == "vertical" ? 1 : 0;
-        var tiles = tileIds.Select(id => new
+        // Parse TilePositions JSON: [{"tileId":"...","row":0,"column":0},...]
+        var positions = new List<(string TileId, int Row, int Column)>();
+        if (!string.IsNullOrWhiteSpace(model.TilePositions))
         {
-            tileId = id,
-            letter = "",
-            isBlank = false,
-            row = model.StartRow,
-            column = model.StartColumn + (direction == 0 ? Array.IndexOf(tileIds, id) : 0)
-        }).ToList();
+            var parsed = System.Text.Json.JsonSerializer.Deserialize<List<(string TileId, int Row, int Column)>>(model.TilePositions);
+            if (parsed != null)
+            {
+                positions = parsed;
+            }
+        }
+
+        // Build the request with each tile having its own row/column
+        var tiles = positions.Count > 0
+            ? positions.Select(p => new
+            {
+                tileId = p.TileId,
+                letter = "",
+                isBlank = false,
+                row = p.Row,
+                column = p.Column
+            }).ToList()
+            : tileIds.Select((id, index) => new
+            {
+                tileId = id,
+                letter = "",
+                isBlank = false,
+                row = 7,
+                column = 7 + index
+            }).ToList();
 
         var request = new
         {
             tiles,
-            startRow = model.StartRow,
-            startColumn = model.StartColumn,
-            direction,
-            blankAssignments = model.BlankAssignments
+            startRow = tiles.Any() ? tiles[0].row : 7,
+            startColumn = tiles.Any() ? tiles[0].column : 7,
+            direction = 0,
+            blankAssignments = new Dictionary<string, string>()
         };
 
         var response = await _httpClient.PostAsJsonAsync(
@@ -467,7 +487,7 @@ public class SwapTilesFormModel
 }
 
 /// <summary>
-/// Form model for placing tiles.
+/// Form model for placing tiles (drag-and-drop).
 /// </summary>
 public class PlaceTilesFormModel
 {
@@ -475,14 +495,5 @@ public class PlaceTilesFormModel
     public string? SelectedTiles { get; set; }
 
     [BindProperty]
-    public int StartRow { get; set; }
-
-    [BindProperty]
-    public int StartColumn { get; set; }
-
-    [BindProperty]
-    public string Direction { get; set; } = "horizontal";
-
-    [BindProperty]
-    public Dictionary<string, string>? BlankAssignments { get; set; }
+    public string? TilePositions { get; set; }
 }
