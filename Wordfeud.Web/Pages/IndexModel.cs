@@ -20,6 +20,12 @@ public class IndexModel : PageModel
     public GameViewModel? CurrentGame { get; set; }
 
     /// <summary>
+    /// Gets or sets the error message when API call fails.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? ErrorMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets the player name for creating/joining.
     /// </summary>
     [BindProperty]
