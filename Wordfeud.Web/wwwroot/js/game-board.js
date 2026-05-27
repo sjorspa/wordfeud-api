@@ -21,7 +21,8 @@ const GameState = {
     colorblindMode: localStorage.getItem('wordfeud-colorblind') === 'true',
     darkMode: localStorage.getItem('wordfeud-darkmode') !== 'false', // Default dark
     reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-    undoHistory: new Map() // key: timestamp -> value: placedTiles snapshot
+    undoHistory: new Map(), // key: timestamp -> value: placedTiles snapshot
+    blankLetterOverrides: new Map() // tileId -> chosen letter for blank tiles
 };
 
 // ============================================
@@ -896,6 +897,7 @@ function removePlacedTile(row, col) {
     if (!tileId) return;
 
     GameState.placedTiles.delete(key);
+    GameState.blankLetterOverrides.delete(tileId); // Clean up blank override
 
     const cell = getBoardCell(row, col);
     if (cell) {
@@ -1000,8 +1002,12 @@ async function placeWord() {
         tiles: tiles.map(([key, tileId]) => {
             const [row, col] = key.split(',').map(Number);
             const tileData = hand.find(t => t.id === tileId);
+            // Use the chosen letter for blank tiles if one was selected
+            const letter = tileData?.isBlank && GameState.blankLetterOverrides.has(tileId)
+                ? GameState.blankLetterOverrides.get(tileId)
+                : (tileData?.letter || '');
             return {
-                letter: tileData?.letter || '',
+                letter: letter,
                 isBlank: tileData?.isBlank || false,
                 tileId: tileId,
                 row: row,
@@ -1184,6 +1190,9 @@ async function selectBlankLetter(letter) {
             break;
         }
     }
+
+    // Store the chosen letter so placeWord() can read it
+    GameState.blankLetterOverrides.set(GameState.blankTileTargetId, letter);
 
     updatePlacedTilesPreview();
     closeBlankModal();
