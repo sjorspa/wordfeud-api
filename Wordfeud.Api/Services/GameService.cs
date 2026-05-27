@@ -11,7 +11,7 @@ namespace Wordfeud.Api.Services;
 /// </summary>
 public class GameService : IGameService
 {
-    private readonly Dictionary<string, Game> _games = new();
+    private readonly Dictionary<string, Game> _games = new(StringComparer.OrdinalIgnoreCase);
     private readonly IDutchDictionaryService _dictionaryService;
     private readonly ILogger<GameService> _logger;
     private readonly object _lock = new();
