@@ -564,13 +564,16 @@ function updateTileRack(hand) {
 
     rack.innerHTML = hand.map(tile => {
         const blankClass = tile.isBlank ? 'blank-tile' : '';
+        const isPlaced = GameState.placedTiles.has(Array.from(GameState.placedTiles.entries()).find(([k, v]) => v === tile.id)?.[0]);
+        const hiddenStyle = isPlaced ? 'style="display: none;"' : '';
         return `
             <div class="tile ${blankClass}"
                  data-tile-id="${tile.id}"
                  data-points="${tile.points}"
                  draggable="true"
                  ondragstart="handleDragStart(event, '${tile.id}')"
-                 onclick="handleTileClick('${tile.id}')">
+                 onclick="handleTileClick('${tile.id}')"
+                 ${hiddenStyle}>
                 ${tile.isBlank ? '?' : tile.letter}
                 <span class="points">${tile.points}</span>
             </div>
@@ -770,6 +773,12 @@ function handleDrop(event, row, col) {
     cell.classList.add('drop-hover');
     setTimeout(() => cell.classList.remove('drop-hover'), 200);
 
+    // Hide the original tile in the rack
+    const rackTileEl = document.querySelector(`#tile-rack [data-tile-id="${tileId}"]`);
+    if (rackTileEl) {
+        rackTileEl.style.display = 'none';
+    }
+
     // Get tile data from the hand to render it visually
     const hand = getCurrentHand();
     const tileData = hand.find(t => t.id === tileId);
@@ -836,6 +845,12 @@ function removePlacedTile(row, col) {
         if (tileEl) {
             tileEl.remove();
         }
+    }
+
+    // Show the tile back in the rack
+    const rackTileEl = document.querySelector(`#tile-rack [data-tile-id="${tileId}"]`);
+    if (rackTileEl) {
+        rackTileEl.style.display = '';
     }
 
     updatePlacedTilesPreview();
