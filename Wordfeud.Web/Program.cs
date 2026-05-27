@@ -4,11 +4,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpClient("Api", c =>
 {
     c.BaseAddress = new Uri(builder.Configuration["ApiUrl"] ?? "http://localhost:8080");
+    c.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddHttpClient();
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -24,6 +26,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapRazorPages();
 
 app.Run();

@@ -1,0 +1,250 @@
+@using System.Linq
+@page "/game/{id}"
+@model Wordfeud.Web.Pages.Game.BoardModel
+@{
+    ViewData["Title"] = $"Game {Model.GameId} - Wordfeud";
+}
+
+<div class="max-w-6xl mx-auto">
+    <!-- Back Button -->
+    <a href="/" class="inline-flex items-center text-gray-400 hover:text-white mb-4 transition-colors">
+        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to Home
+    </a>
+
+    @if (Model.Game != null)
+    {
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Left Panel: Score & Info -->
+            <div class="lg:w-64 order-2 lg:order-1">
+                <!-- Score Panel -->
+                <div class="bg-gray-800 rounded-2xl shadow-xl p-4 mb-4">
+                    <h3 class="text-lg font-bold text-tile-gold mb-3">Scores</h3>
+                    @foreach (var player in Model.Game.Players)
+                    {
+                        var isCurrentPlayer = player.Id == Model.Game.CurrentPlayerId;
+                        var isYou = player.Id == Model.CurrentPlayerId;
+                        <div class="flex items-center justify-between p-2 rounded-lg @(isCurrentPlayer ? "bg-gray-700" : "") @(isYou ? "ring-2 ring-tile-gold" : "") mb-2">
+                            <div>
+                                <span class="font-semibold @(isYou ? "text-tile-gold" : "text-white")">@player.Name</span>
+                                @if (isYou)
+                                {
+                                    <span class="text-xs text-gray-400 ml-2">(You)</span>
+                                }
+                                @if (isCurrentPlayer)
+                                {
+                                    <span class="ml-2 text-xs text-green-400">&#9679;</span>
+                                }
+                            </div>
+                            <span class="text-xl font-bold text-white">@player.Score</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Game Status -->
+                <div class="bg-gray-800 rounded-2xl shadow-xl p-4 mb-4">
+                    <h3 class="text-lg font-bold text-tile-gold mb-3">Game Info</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Status:</span>
+                            <span class="font-semibold @(Model.Game.Status == "Active" ? "text-green-400" : "text-yellow-400")">@Model.Game.Status</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Turn:</span>
+                            <span class="font-semibold text-white">
+                                @(Model.Game.CurrentPlayerId == Model.CurrentPlayerId ? "Your turn" : "Opponent's turn")
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Move:</span>
+                            <span class="font-mono text-white">#@(Model.Game.MoveNumber)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">Bag:</span>
+                            <span class="font-mono text-white">@Model.Game.BagCount</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Move History -->
+                <div class="bg-gray-800 rounded-2xl shadow-xl p-4">
+                    <h3 class="text-lg font-bold text-tile-gold mb-3">Move History</h3>
+                    <div class="max-h-64 overflow-y-auto space-y-2">
+                        @if (Model.MoveHistory != null && Model.MoveHistory.Count > 0)
+                        {
+                            @foreach (var move in Model.MoveHistory)
+                            {
+                                <div class="text-xs p-2 bg-gray-900 rounded">
+                                    <span class="font-semibold text-tile-gold">@move.PlayerName</span>
+                                    <span class="text-gray-400 ml-1">placed "@move.Word"</span>
+                                    <span class="text-green-400 ml-1">+@(move.Points) pts</span>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-gray-500 text-sm">No moves yet</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: Game Board -->
+            <div class="flex-1 order-1 lg:order-2 flex flex-col items-center">
+                <!-- Turn Indicator -->
+                <div class="mb-4 px-6 py-2 rounded-full @(Model.Game.CurrentPlayerId == Model.CurrentPlayerId ? "bg-green-600" : "bg-yellow-600")">
+                    <span class="font-semibold">@(Model.Game.CurrentPlayerId == Model.CurrentPlayerId ? "Your Turn" : "Opponent's Turn")</span>
+                </div>
+
+                <!-- Board Container -->
+                <div class="bg-board-dark p-1 sm:p-2 rounded-xl shadow-2xl">
+                    <div id="board-container" class="grid grid-cols-15 gap-0 border-2 border-board-border"
+                         style="width: min(85vw, 525px); height: min(85vw, 525px);">
+                        @for (var row = 0; row < 15; row++)
+                        {
+                            @for (var col = 0; col < 15; col++)
+                            {
+                                var bonus = GetBonusType(row, col);
+                                var cellClass = "relative flex items-center justify-center text-[0.45rem] sm:text-[0.6rem] font-bold uppercase select-none";
+                                var bonusClass = "";
+                                var icon = "";
+
+                                switch (bonus)
+                                {
+                                    case "TW":
+                                        bonusClass = "bonus-tws";
+                                        icon = "TW";
+                                        break;
+                                    case "DW":
+                                        bonusClass = "bonus-dws";
+                                        icon = "DW";
+                                        break;
+                                    case "DL":
+                                        bonusClass = "bonus-dls";
+                                        icon = "DL";
+                                        break;
+                                    case "TL":
+                                        bonusClass = "bonus-tls";
+                                        icon = "TL";
+                                        break;
+                                    case "STAR":
+                                        bonusClass = "bonus-star";
+                                        icon = "★";
+                                        break;
+                                }
+
+                                <div class="@(cellClass) @(bonusClass) board-cell"
+                                     style="background: @(string.IsNullOrEmpty(bonus) ? "#1a6b3c" : "inherit");"
+                                     data-row="@row" data-col="@col"
+                                     ondragover="event.preventDefault(); this.classList.add('drop-hover')"
+                                     ondragleave="this.classList.remove('drop-hover')"
+                                     ondrop="handleDrop(event, @row, @col)">
+                                    @if (!string.IsNullOrEmpty(icon))
+                                    {
+                                        <span class="drop-shadow-sm leading-none">@icon</span>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Placed Tiles Preview -->
+                <div id="placed-tiles-preview" class="mt-4 min-h-[3.5rem] flex items-center gap-2 p-3 bg-gray-800 rounded-xl w-full max-w-lg">
+                    <span class="text-gray-500 text-sm">Drag tiles from your rack onto the board</span>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2 mt-4 w-full max-w-lg justify-center">
+                    <button onclick="placeWord()" id="place-btn" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm">
+                        &#10003; Place Word
+                    </button>
+                    <button onclick="recallTiles()" class="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-xl transition-all text-sm">
+                        &#8634; Recall Tiles
+                    </button>
+                    <button onclick="passTurn()" class="px-5 py-2.5 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-xl transition-all text-sm">
+                        &#9203; Pass Turn
+                    </button>
+                    <button onclick="showSwapModal()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-all text-sm">
+                        &#8645; Swap Tiles
+                    </button>
+                </div>
+
+                <!-- Tile Rack (populated by JavaScript) -->
+                <div class="mt-6 bg-wood-dark p-3 sm:p-4 rounded-2xl shadow-xl">
+                    <div id="tile-rack" class="flex gap-1 sm:gap-2 justify-center">
+                        <div class="tile" data-tile-id="loading" data-points="0">
+                            <span class="animate-pulse">...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-20">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-400">Loading game...</p>
+        </div>
+    }
+</div>
+
+<!-- Blank Tile Letter Picker Modal -->
+<div id="blank-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center">
+    <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-tile-gold mb-4">Choose a letter for blank tile</h3>
+        <div class="grid grid-cols-7 gap-2 mb-4">
+            @foreach (var letter in "ABCDEFGHIJKLMNOPQRSTUVWXYZ".Select((c, i) => new { Letter = c.ToString(), Index = i }))
+            {
+                <button onclick="selectBlankLetter('@letter.Letter')" class="tile text-lg hover:scale-110 transition-transform">
+                    @letter.Letter
+                </button>
+            }
+        </div>
+        <button onclick="closeBlankModal()" class="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300">Cancel</button>
+    </div>
+</div>
+
+<!-- Swap Tiles Modal -->
+<div id="swap-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center">
+    <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-tile-gold mb-4">Swap Tiles</h3>
+        <p class="text-gray-400 text-sm mb-4">Select tiles to swap (costs a turn):</p>
+        <div id="swap-tile-list" class="space-y-2 mb-4 max-h-64 overflow-y-auto">
+            <!-- Populated by JS -->
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeSwapModal()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300">Cancel</button>
+            <button onclick="confirmSwap()" class="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-semibold">Swap</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/game-board.js"></script>
+}
+
+@* Helper to get bonus type for a cell *@
+@functions {
+    public static string GetBonusType(int row, int col)
+    {
+        // Double Word - pink
+        var dw = new (int, int)[] { (1,1),(2,2),(3,3),(4,4),(1,13),(2,12),(3,11),(4,10),(10,4),(11,3),(12,2),(13,1),(10,10),(11,11),(12,12),(13,13) };
+        // Triple Word - red
+        var tw = new (int, int)[] { (0,0),(0,7),(0,14),(7,0),(7,14),(14,0),(14,7),(14,14) };
+        // Triple Letter - dark blue
+        var tl = new (int, int)[] { (1,5),(1,9),(5,1),(5,5),(5,9),(5,13),(9,1),(9,5),(9,9),(9,13),(13,5),(13,9) };
+        // Double Letter - light blue
+        var dl = new (int, int)[] { (0,3),(0,11),(2,6),(2,8),(3,0),(3,7),(3,14),(6,2),(6,6),(6,8),(6,12),(7,3),(7,11),(8,2),(8,6),(8,8),(8,12),(11,0),(11,7),(11,14),(12,6),(12,8),(14,3),(14,11) };
+
+        if (row == 7 && col == 7) return "STAR";
+        if (tl.Any(x => x.Item1 == row && x.Item2 == col)) return "TL";
+        if (dl.Any(x => x.Item1 == row && x.Item2 == col)) return "DL";
+        if (dw.Any(x => x.Item1 == row && x.Item2 == col)) return "DW";
+        if (tw.Any(x => x.Item1 == row && x.Item2 == col)) return "TW";
+        return "";
+    }
+}
