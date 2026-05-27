@@ -8,8 +8,7 @@ namespace Wordfeud.Web.Controllers;
 /// All frontend JavaScript calls /api/* on the same host, and this controller
 /// forwards them to the configured ApiUrl (e.g., http://wordfeud-api:8080).
 /// </summary>
-[ApiController]
-public class ProxyController : ControllerBase
+public class ProxyController : Controller
 {
     private readonly HttpClient _httpClient;
     private readonly string _apiBaseUrl;
@@ -43,8 +42,7 @@ public class ProxyController : ControllerBase
         // Copy headers (except host-related ones)
         foreach (var header in HttpContext.Request.Headers)
         {
-            if (!header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase) &&
-                !header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+            if (!header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
             {
                 requestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.AsEnumerable());
             }
@@ -69,34 +67,32 @@ public class ProxyController : ControllerBase
         {
             var response = await _httpClient.SendAsync(requestMessage, HttpContext.RequestAborted);
 
-            // Copy response headers
+            // Read response body into bytes
+            var bodyBytes = await response.Content.ReadAsByteArrayAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+
+            // Set status code and headers on Response
+            Response.StatusCode = (int)response.StatusCode;
             foreach (var header in response.Headers)
             {
                 if (!header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
                 {
-                    HttpContext.Response.Headers.Append(header.Key, new Microsoft.Extensions.Primitives.StringValues(header.Value.ToArray()));
+                    Response.Headers[header.Key] = header.Value.ToString();
                 }
             }
-            if (response.Content.Headers.ContentType != null)
-            {
-                HttpContext.Response.Headers.ContentType = response.Content.Headers.ContentType.ToString();
-            }
 
-            // Copy response body
-            var bodyBytes = await response.Content.ReadAsByteArrayAsync();
-
-            // Set status code and return the body as a file content result
-            HttpContext.Response.StatusCode = (int)response.StatusCode;
-            return new FileContentResult(bodyBytes, response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream");
+            // Return body via File() helper
+            return File(bodyBytes, contentType);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error proxying request to {TargetUrl}", targetUrl);
-            return StatusCode(502, new
+            return new ContentResult
             {
-                error = "Bad Gateway",
-                message = "Unable to reach the API backend service."
-            });
+                Content = System.Text.Json.JsonSerializer.Serialize(new { error = "Bad Gateway", message = "Unable to reach the API backend service." }),
+                ContentType = "application/json",
+                StatusCode = 502
+            };
         }
     }
 
