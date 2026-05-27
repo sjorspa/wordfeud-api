@@ -1012,6 +1012,8 @@ async function placeWord() {
 
     try {
         showLoading('place-btn');
+        // Ensure currentPlayerId is populated from hidden input or localStorage
+        getCurrentPlayerId();
         const result = await apiPost(`/games/${GameState.gameId}/place?playerId=${GameState.currentPlayerId}`, body);
 
         if (result) {
@@ -1061,6 +1063,8 @@ async function passTurn() {
     }
 
     try {
+        // Ensure currentPlayerId is populated from hidden input or localStorage
+        getCurrentPlayerId();
         const result = await apiPost(`/games/${GameState.gameId}/pass?playerId=${GameState.currentPlayerId}`, {});
         showToast('Turn passed', 'info');
         await loadGameState();
@@ -1120,6 +1124,8 @@ async function confirmSwap() {
     }
 
     try {
+        // Ensure currentPlayerId is populated from hidden input or localStorage
+        getCurrentPlayerId();
         const result = await apiPost(`/games/${GameState.gameId}/swap?playerId=${GameState.currentPlayerId}`, {
             tileIds: Array.from(GameState.swapSelectedTiles)
         });
