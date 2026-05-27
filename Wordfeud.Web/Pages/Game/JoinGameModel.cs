@@ -68,13 +68,13 @@ public class JoinGameModel : PageModel
 
             var problem = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
             var detail = problem?["detail"]?.ToString() ?? "Unknown error";
-            ModelState.AddModelError("Error", detail);
+            ErrorMessage = detail;
             return Page();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error joining game {GameId}", GameId);
-            ModelState.AddModelError("Error", $"Failed to join game: {ex.Message}");
+            ErrorMessage = $"Failed to join game: {ex.Message}";
             return Page();
         }
     }
