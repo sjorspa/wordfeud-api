@@ -57,6 +57,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
 
         var placeRequest1 = new
         {
+            playerId = currentPlayerId,
             tiles = new[]
             {
                 new
@@ -70,7 +71,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
             },
         };
 
-        var placeResponse1 = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest1);
+        var placeResponse1 = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest1);
         placeResponse1.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         // Verify board state after first move
@@ -88,7 +89,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
         // ========== PHASE 3: Player2 passes turn (no word needed) ==========
 
         currentPlayerId = currentGame.CurrentPlayerId;
-        var passResponse1 = await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
+        var passResponse1 = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentPlayerId });
         passResponse1.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
@@ -100,7 +101,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
         currentPlayerId = currentGame.CurrentPlayerId;
         currentPlayer = currentGame.Players.First(p => p.Id == currentPlayerId);
         var swapTileIds = currentPlayer.Hand.Take(2).Select(t => t.Id).ToArray();
-        var swapResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={currentPlayerId}", new { tileIds = swapTileIds });
+        var swapResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap", new { playerId = currentPlayerId, tileIds = swapTileIds });
         swapResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
@@ -111,7 +112,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
         // ========== PHASE 5: Player2 passes turn ==========
 
         currentPlayerId = currentGame.CurrentPlayerId;
-        await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentPlayerId });
 
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
         currentGame = await TestHelpers.ReadAsGameAsync(gameState);
@@ -121,7 +122,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
         // ========== PHASE 6: Player1 passes, Player2 passes, Player1 passes (3 consecutive - game ends) ==========
 
         currentPlayerId = currentGame.CurrentPlayerId;
-        await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentPlayerId });
 
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
         currentGame = await TestHelpers.ReadAsGameAsync(gameState);
@@ -129,7 +130,7 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
 
         // Final pass
         currentPlayerId = currentGame.CurrentPlayerId;
-        var finalPassResponse = await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentPlayerId}", null);
+        var finalPassResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentPlayerId });
         finalPassResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
 
         // ========== PHASE 7: Verify game ended ==========
@@ -171,8 +172,9 @@ public class FullGameTests : IClassFixture<TestWebApplicationFactory>
 
         // ========== PHASE 10: Verify game cannot be modified after finish ==========
 
-        var invalidPlaceResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={player1.Id}", new
+        var invalidPlaceResponse = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", new
         {
+            playerId = player1.Id,
             tiles = new[] { new { letter = "X", isBlank = false, tileId = "test", row = 8, column = 8 } },
         });
         invalidPlaceResponse.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);

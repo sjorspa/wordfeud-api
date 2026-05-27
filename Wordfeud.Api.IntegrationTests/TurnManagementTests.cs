@@ -29,7 +29,7 @@ public class TurnManagementTests : IClassFixture<TestWebApplicationFactory>
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         // Act
-        var response = await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentGame!.CurrentPlayerId}", null);
+        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentGame!.CurrentPlayerId });
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -42,7 +42,7 @@ public class TurnManagementTests : IClassFixture<TestWebApplicationFactory>
     {
         // Arrange
         // Act
-        var response = await _client.PostAsync("/api/games/nonexistent-id/pass?playerId=player-id", null);
+        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/pass", new { playerId = "player-id" });
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);

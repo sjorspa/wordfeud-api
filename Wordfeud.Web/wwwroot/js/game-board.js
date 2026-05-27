@@ -1014,7 +1014,8 @@ async function placeWord() {
         showLoading('place-btn');
         // Ensure currentPlayerId is populated from hidden input or localStorage
         getCurrentPlayerId();
-        const result = await apiPost(`/games/${GameState.gameId}/place?playerId=${GameState.currentPlayerId}`, body);
+        const request = { ...body, playerId: GameState.currentPlayerId };
+        const result = await apiPost(`/games/${GameState.gameId}/place`, request);
 
         if (result) {
             showToast(`Word placed! +${result.points || 0} points`, 'success');
@@ -1065,7 +1066,7 @@ async function passTurn() {
     try {
         // Ensure currentPlayerId is populated from hidden input or localStorage
         getCurrentPlayerId();
-        const result = await apiPost(`/games/${GameState.gameId}/pass?playerId=${GameState.currentPlayerId}`, {});
+        const result = await apiPost(`/games/${GameState.gameId}/pass`, { playerId: GameState.currentPlayerId });
         showToast('Turn passed', 'info');
         await loadGameState();
     } catch (error) {

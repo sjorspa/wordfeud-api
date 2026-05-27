@@ -35,6 +35,12 @@ public class JoinGameRequest
 public class PlaceTilesRequest
 {
     /// <summary>
+    /// The ID of the player placing tiles.
+    /// </summary>
+    [Required]
+    public required string PlayerId { get; set; }
+
+    /// <summary>
     /// The tiles to place, each with its own Row and Column.
     /// </summary>
     [Required]
@@ -54,6 +60,12 @@ public class PlaceTilesRequest
 public class SwapTilesRequest
 {
     /// <summary>
+    /// The ID of the player swapping tiles.
+    /// </summary>
+    [Required]
+    public required string PlayerId { get; set; }
+
+    /// <summary>
     /// The IDs of tiles to swap.
     /// </summary>
     [Required]
@@ -67,7 +79,11 @@ public class SwapTilesRequest
 /// </summary>
 public class PassTurnRequest
 {
-    // Intentionally empty — no body needed for pass
+    /// <summary>
+    /// The ID of the player passing.
+    /// </summary>
+    [Required]
+    public required string PlayerId { get; set; }
 }
 
 /// <summary>

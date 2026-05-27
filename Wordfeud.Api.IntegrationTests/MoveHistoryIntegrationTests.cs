@@ -69,20 +69,21 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
 
         var placeRequest = new
         {
-            tiles = new[]
+            PlayerId = currentGame.CurrentPlayerId,
+            Tiles = new[]
             {
                 new
                 {
-                    letter = tile.Letter,
-                    isBlank = tile.IsBlank,
-                    tileId = tile.Id,
-                    row = 7,
-                    column = 7
+                    Letter = tile.Letter,
+                    IsBlank = tile.IsBlank,
+                    TileId = tile.Id,
+                    Row = 7,
+                    Column = 7
                 }
             },
         };
 
-        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentGame.CurrentPlayerId}", placeRequest);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest);
 
         // Act
         var response = await _client.GetAsync($"/api/games/{game.Id}/moves");
@@ -120,7 +121,7 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
         currentGame.Should().NotBeNull();
 
         // Act: Pass turn
-        await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentGame.CurrentPlayerId}", null);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentGame.CurrentPlayerId });
 
         // Assert
         var response = await _client.GetAsync($"/api/games/{game.Id}/moves");
@@ -155,7 +156,7 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
 
         // Act: Swap 2 tiles
         var swapTileIds = currentPlayer.Hand.Take(2).Select(t => t.Id).ToArray();
-        await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={currentGame.CurrentPlayerId}", new { tileIds = swapTileIds });
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap", new { playerId = currentGame.CurrentPlayerId, tileIds = swapTileIds });
 
         // Assert
         var response = await _client.GetAsync($"/api/games/{game.Id}/moves");
@@ -192,24 +193,25 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
         var tile = currentPlayer.Hand[0];
         var placeRequest = new
         {
-            tiles = new[]
+            PlayerId = currentGame.CurrentPlayerId,
+            Tiles = new[]
             {
                 new
                 {
-                    letter = tile.Letter,
-                    isBlank = tile.IsBlank,
-                    tileId = tile.Id,
-                    row = 7,
-                    column = 7
+                    Letter = tile.Letter,
+                    IsBlank = tile.IsBlank,
+                    TileId = tile.Id,
+                    Row = 7,
+                    Column = 7
                 }
             },
         };
-        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentGame.CurrentPlayerId}", placeRequest);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest);
 
         // Move 2: Pass turn
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
         currentGame = await TestHelpers.ReadAsGameAsync(gameState);
-        await _client.PostAsync($"/api/games/{game.Id}/pass?playerId={currentGame.CurrentPlayerId}", null);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentGame.CurrentPlayerId });
 
         // Move 3: Place another tile
         gameState = await _client.GetAsync($"/api/games/{game.Id}");
@@ -218,19 +220,20 @@ public class MoveHistoryIntegrationTests : IClassFixture<TestWebApplicationFacto
         tile = currentPlayer.Hand[0];
         placeRequest = new
         {
-            tiles = new[]
+            PlayerId = currentGame.CurrentPlayerId,
+            Tiles = new[]
             {
                 new
                 {
-                    letter = tile.Letter,
-                    isBlank = tile.IsBlank,
-                    tileId = tile.Id,
-                    row = 7,
-                    column = 8
+                    Letter = tile.Letter,
+                    IsBlank = tile.IsBlank,
+                    TileId = tile.Id,
+                    Row = 7,
+                    Column = 8
                 }
             },
         };
-        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentGame.CurrentPlayerId}", placeRequest);
+        await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest);
 
         // Act
         var response = await _client.GetAsync($"/api/games/{game.Id}/moves");

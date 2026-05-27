@@ -144,17 +144,16 @@ public class GamesController : ControllerBase
     /// Places tiles on the board.
     /// </summary>
     /// <param name="id">The game ID.</param>
-    /// <param name="playerId">The ID of the player placing tiles.</param>
-    /// <param name="request">The tile placement details.</param>
+    /// <param name="request">The tile placement details including player ID.</param>
     /// <returns>The updated game state.</returns>
     [HttpPost("{id}/place")]
     [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> PlaceTiles(string id, [FromQuery] string playerId, [FromBody] PlaceTilesRequest request)
+    public async Task<IActionResult> PlaceTiles(string id, [FromBody] PlaceTilesRequest request)
     {
-        _logger.LogInformation("Player {PlayerId} placing tiles in game {GameId}", playerId, id);
+        _logger.LogInformation("Player {PlayerId} placing tiles in game {GameId}", request.PlayerId, id);
 
         if (!ModelState.IsValid)
         {
@@ -168,7 +167,7 @@ public class GamesController : ControllerBase
 
         try
         {
-            var game = await _gameService.PlaceTilesAsync(id, playerId, request);
+            var game = await _gameService.PlaceTilesAsync(id, request.PlayerId, request);
             _logger.LogInformation("Tiles placed successfully in game {GameId}", id);
             return Ok(game);
         }
@@ -270,20 +269,20 @@ public class GamesController : ControllerBase
     /// Passes the current turn.
     /// </summary>
     /// <param name="id">The game ID.</param>
-    /// <param name="playerId">The ID of the player passing.</param>
+    /// <param name="request">The pass turn details including player ID.</param>
     /// <returns>The updated game state.</returns>
     [HttpPost("{id}/pass")]
     [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> PassTurn(string id, [FromQuery] string playerId)
+    public async Task<IActionResult> PassTurn(string id, [FromBody] PassTurnRequest request)
     {
-        _logger.LogInformation("Player {PlayerId} passing turn in game {GameId}", playerId, id);
+        _logger.LogInformation("Player {PlayerId} passing turn in game {GameId}", request.PlayerId, id);
 
         try
         {
-            var game = await _gameService.PassTurnAsync(id, playerId);
+            var game = await _gameService.PassTurnAsync(id, request.PlayerId);
             _logger.LogInformation("Turn passed in game {GameId}", id);
             return Ok(game);
         }
@@ -320,17 +319,16 @@ public class GamesController : ControllerBase
     /// Swaps tiles from a player's hand back to the bag.
     /// </summary>
     /// <param name="id">The game ID.</param>
-    /// <param name="playerId">The ID of the player swapping tiles.</param>
-    /// <param name="request">The tiles to swap.</param>
+    /// <param name="request">The tile swap details including player ID.</param>
     /// <returns>The updated game state.</returns>
     [HttpPost("{id}/swap")]
     [ProducesResponseType(typeof(Game), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> SwapTiles(string id, [FromQuery] string playerId, [FromBody] SwapTilesRequest request)
+    public async Task<IActionResult> SwapTiles(string id, [FromBody] SwapTilesRequest request)
     {
-        _logger.LogInformation("Player {PlayerId} swapping tiles in game {GameId}", playerId, id);
+        _logger.LogInformation("Player {PlayerId} swapping tiles in game {GameId}", request.PlayerId, id);
 
         if (!ModelState.IsValid)
         {
@@ -344,7 +342,7 @@ public class GamesController : ControllerBase
 
         try
         {
-            var game = await _gameService.SwapTilesAsync(id, playerId, request);
+            var game = await _gameService.SwapTilesAsync(id, request.PlayerId, request);
             _logger.LogInformation("Tiles swapped in game {GameId}", id);
             return Ok(game);
         }

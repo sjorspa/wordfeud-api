@@ -29,11 +29,10 @@ public class TileSwapTests : IClassFixture<TestWebApplicationFactory>
         var currentGame = await TestHelpers.ReadAsGameAsync(gameState);
 
         var player = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
-        var swapRequest = new { tileIds = new[] { player.Hand[0].Id } };
-        var currentPlayerId = player.Id;
+        var swapRequest = new { playerId = player.Id, tileIds = new[] { player.Hand[0].Id } };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap?playerId={currentPlayerId}", swapRequest);
+        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/swap", swapRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -43,10 +42,10 @@ public class TileSwapTests : IClassFixture<TestWebApplicationFactory>
     public async Task PostSwapTiles_ShouldReturn404WhenGameNotFound()
     {
         // Arrange - use a dummy playerId since the game doesn't exist anyway
-        var swapRequest = new { tileIds = new[] { "tile-id" } };
+        var swapRequest = new { playerId = "dummy-player-id", tileIds = new[] { "tile-id" } };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/swap?playerId=dummy-player-id", swapRequest);
+        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/swap", swapRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);

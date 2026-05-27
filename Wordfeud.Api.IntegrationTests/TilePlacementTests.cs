@@ -34,6 +34,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
 
         var placeRequest = new
         {
+            playerId = currentPlayerId,
             tiles = new[]
             {
                 new
@@ -48,7 +49,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest);
+        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK);
@@ -60,6 +61,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
         // Arrange - use a dummy playerId since the game doesn't exist anyway
         var placeRequest = new
         {
+            playerId = "dummy-player-id",
             tiles = new[]
             {
                 new
@@ -74,7 +76,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/place?playerId=dummy-player-id", placeRequest);
+        var response = await _client.PostAsJsonAsync("/api/games/nonexistent-id/place", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);
@@ -94,6 +96,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
 
         var placeRequest = new
         {
+            playerId = currentPlayerId,
             tiles = new[]
             {
                 new
@@ -108,7 +111,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest);
+        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
@@ -153,7 +156,7 @@ public class TilePlacementTests : IClassFixture<TestWebApplicationFactory>
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place?playerId={currentPlayerId}", placeRequest);
+        var response = await _client.PostAsJsonAsync($"/api/games/{game.Id}/place", placeRequest);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);

@@ -194,6 +194,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -223,6 +225,8 @@ public class GameServiceTests
         // Arrange
         var request = new PlaceTilesRequest
         {
+            PlayerId = "player-id",
+
             Tiles = new List<TilePlacementDto>(),
         };
 
@@ -242,6 +246,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>(),
         };
 
@@ -261,6 +267,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = opponentId,
+
             Tiles = new List<TilePlacementDto>(),
         };
 
@@ -279,6 +287,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>(),
         };
 
@@ -300,6 +310,8 @@ public class GameServiceTests
         // Place first tile at (7,7)
         var firstRequest = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -322,6 +334,8 @@ public class GameServiceTests
         // Try to place at same position (now with the player who has the turn)
         var secondRequest = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -352,6 +366,8 @@ public class GameServiceTests
         var fakeTileId = Guid.NewGuid().ToString();
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -393,6 +409,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -423,6 +441,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -454,6 +474,8 @@ public class GameServiceTests
         // Place first word at center
         var firstRequest = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -476,6 +498,8 @@ public class GameServiceTests
         // Place tiles far from center (not connecting)
         var secondRequest = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -519,6 +543,8 @@ public class GameServiceTests
         // For first move, tiles must cross (7,7), so we place at (7,7) and (7,8)
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -550,6 +576,8 @@ public class GameServiceTests
 
         var invalidRequest = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -579,6 +607,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -621,6 +651,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -662,6 +694,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -695,6 +729,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -727,6 +763,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -762,6 +800,8 @@ public class GameServiceTests
         // Place 2 tiles to form a valid 2+ letter word (single tile placement fails validation)
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -807,6 +847,8 @@ public class GameServiceTests
         // (7,7) is a Double Word square, (7,8) is no bonus
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "G", IsBlank = false, TileId = hand[0].Id, Row = 7, Column = 7 },
@@ -830,6 +872,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "E", IsBlank = false, TileId = hand2[0].Id, Row = 6, Column = 8 }
@@ -860,6 +904,8 @@ public class GameServiceTests
         // E lands on center (7,7) which is Double Word
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "D", IsBlank = false, TileId = hand[0].Id, Row = 7, Column = 6 },
@@ -877,6 +923,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 5, Column = 7 },
@@ -912,6 +960,8 @@ public class GameServiceTests
 
         var request = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new()
@@ -1054,6 +1104,7 @@ public class GameServiceTests
         var tileToSwap = player.Hand[0].Id;
         var request = new SwapTilesRequest
         {
+            PlayerId = playerId,
             TileIds = new List<string> { tileToSwap }
         };
 
@@ -1070,7 +1121,7 @@ public class GameServiceTests
     public async Task SwapTilesAsync_ShouldThrowWhenGameNotFound()
     {
         // Arrange
-        var request = new SwapTilesRequest { TileIds = new List<string> { "tile-id" } };
+        var request = new SwapTilesRequest { PlayerId = "player-id", TileIds = new List<string> { "tile-id" } };
 
         // Act & Assert
         await Should.ThrowAsync<KeyNotFoundException>(async () => await _service.SwapTilesAsync("nonexistent", "player-id", request));
@@ -1083,7 +1134,7 @@ public class GameServiceTests
         var game = await _service.CreateGameAsync("Player1");
         game.Status = GameStatus.Finished;
         var playerId = game.Players[0].Id;
-        var request = new SwapTilesRequest { TileIds = new List<string> { "tile-id" } };
+        var request = new SwapTilesRequest { PlayerId = playerId, TileIds = new List<string> { "tile-id" } };
 
         // Act & Assert
         var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, request));
@@ -1098,7 +1149,7 @@ public class GameServiceTests
         await _service.JoinGameAsync(game.Id, "Player2");
         var result = await _service.GetGameAsync(game.Id);
         var wrongPlayerId = result!.Players.First(p => p.Id != result.CurrentPlayerId).Id;
-        var request = new SwapTilesRequest { TileIds = new List<string> { "tile-id" } };
+        var request = new SwapTilesRequest { PlayerId = wrongPlayerId, TileIds = new List<string> { "tile-id" } };
 
         // Act & Assert
         await Should.ThrowAsync<UnauthorizedAccessException>(async () => await _service.SwapTilesAsync(game.Id, wrongPlayerId, request));
@@ -1121,7 +1172,7 @@ public class GameServiceTests
         tileBag!.Clear();
 
         // Act & Assert: Try to swap all tiles when bag is empty
-        var swapRequest = new SwapTilesRequest { TileIds = player.Hand.Select(t => t.Id).ToList() };
+        var swapRequest = new SwapTilesRequest { PlayerId = playerId, TileIds = player.Hand.Select(t => t.Id).ToList() };
 
         var ex = await Should.ThrowAsync<InvalidOperationException>(async () => await _service.SwapTilesAsync(game.Id, playerId, swapRequest));
         ex.Message.ShouldContain("At least 7 tiles must remain in the bag");
@@ -1137,7 +1188,7 @@ public class GameServiceTests
         var playerId = result!.CurrentPlayerId!;
         var player = result.Players.First(p => p.Id == playerId);
 
-        var request = new SwapTilesRequest { TileIds = new List<string> { player.Hand[0].Id } };
+        var request = new SwapTilesRequest { PlayerId = playerId, TileIds = new List<string> { player.Hand[0].Id } };
 
         // Act
         var swappedGame = await _service.SwapTilesAsync(game.Id, playerId, request);
@@ -1163,7 +1214,7 @@ public class GameServiceTests
         result = await _service.GetGameAsync(game.Id);
         playerId = result!.CurrentPlayerId!;
 
-        var request = new SwapTilesRequest { TileIds = new List<string> { result.Players.First(p => p.Id == playerId).Hand[0].Id } };
+        var request = new SwapTilesRequest { PlayerId = playerId, TileIds = new List<string> { result.Players.First(p => p.Id == playerId).Hand[0].Id } };
 
         // Act
         var swappedGame = await _service.SwapTilesAsync(game.Id, playerId, request);
@@ -1270,6 +1321,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == playerId).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 7 },
@@ -1291,6 +1344,8 @@ public class GameServiceTests
         // Player2 places "aars" at (8,7)-(11,7) - K at (7,7) is already there
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 7 },
@@ -1311,6 +1366,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = playerId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "H", IsBlank = false, TileId = hand3[0].Id, Row = 8, Column = 8 },
@@ -1345,6 +1402,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 7 },
@@ -1369,6 +1428,8 @@ public class GameServiceTests
         // Player2 places "aars" at (8,7)-(11,7) - K at (7,7) is already there
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 7 },
@@ -1395,6 +1456,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "H", IsBlank = false, TileId = hand3[0].Id, Row = 6, Column = 6 },
@@ -1433,6 +1496,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 7 },
@@ -1451,6 +1516,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 7 },
@@ -1469,6 +1536,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "X", IsBlank = false, TileId = hand3[0].Id, Row = 8, Column = 8 },
@@ -1501,6 +1570,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 7 },
@@ -1525,6 +1596,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "A", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 7 },
@@ -1549,6 +1622,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "H", IsBlank = false, TileId = hand3[0].Id, Row = 6, Column = 6 },
@@ -1574,6 +1649,8 @@ public class GameServiceTests
 
         var request4 = new PlaceTilesRequest
         {
+                     PlayerId = player2AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "L", IsBlank = false, TileId = hand4[0].Id, Row = 11, Column = 3 },
@@ -1607,6 +1684,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "T", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
@@ -1632,6 +1711,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "R", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 6 },
@@ -1657,6 +1738,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "L", IsBlank = false, TileId = hand3[0].Id, Row = 5, Column = 4 },
@@ -1690,6 +1773,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "H", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 6 },
@@ -1714,6 +1799,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "R", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 6 },
@@ -1738,6 +1825,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "M", IsBlank = false, TileId = hand3[0].Id, Row = 10, Column = 1 },
@@ -1770,6 +1859,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "T", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
@@ -1796,6 +1887,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "J", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 6 },
@@ -1821,6 +1914,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "V", IsBlank = false, TileId = hand3[0].Id, Row = 8, Column = 10 },
@@ -1853,6 +1948,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "B", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
@@ -1877,6 +1974,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "G", IsBlank = false, TileId = hand2[0].Id, Row = 8, Column = 8 },
@@ -1903,6 +2002,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "S", IsBlank = false, TileId = hand3[0].Id, Row = 13, Column = 2 },
@@ -1938,6 +2039,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "K", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 6 },
@@ -1961,6 +2064,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "H", IsBlank = false, TileId = hand2[0].Id, Row = 3, Column = 7 },
@@ -1986,6 +2091,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "V", IsBlank = false, TileId = hand3[0].Id, Row = 10, Column = 4 },
@@ -2019,6 +2126,8 @@ public class GameServiceTests
         var hand1 = game.Players.First(p => p.Id == player1Id).Hand;
         var request1 = new PlaceTilesRequest
         {
+                     PlayerId = player1Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "W", IsBlank = false, TileId = hand1[0].Id, Row = 7, Column = 5 },
@@ -2044,6 +2153,8 @@ public class GameServiceTests
 
         var request2 = new PlaceTilesRequest
         {
+                     PlayerId = player2Id,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "V", IsBlank = false, TileId = hand2[0].Id, Row = 3, Column = 7 },
@@ -2069,6 +2180,8 @@ public class GameServiceTests
 
         var request3 = new PlaceTilesRequest
         {
+                     PlayerId = player1AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "A", IsBlank = false, TileId = hand3[0].Id, Row = 12, Column = 5 },
@@ -2094,6 +2207,8 @@ public class GameServiceTests
 
         var request4 = new PlaceTilesRequest
         {
+                     PlayerId = player2AgainId,
+
             Tiles = new List<TilePlacementDto>
             {
                 new() { Letter = "L", IsBlank = false, TileId = hand4[0].Id, Row = 9, Column = 10 },
