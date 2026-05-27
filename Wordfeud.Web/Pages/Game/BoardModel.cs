@@ -3,8 +3,21 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Wordfeud.Web.Pages.Game;
+
+/// <summary>
+/// JsonSerializerOptions configured for camelCase matching against the API response.
+/// </summary>
+public static class ApiJsonOptions
+{
+    public static readonly JsonSerializerOptions Default = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+}
 
 /// <summary>
 /// Page model for the game board page.
@@ -21,8 +34,6 @@ public class BoardModel : PageModel
     public string? CurrentPlayerId { get; set; }
     public List<MoveHistoryItem>? MoveHistory { get; set; }
     public string? ErrorMessage { get; set; }
-    public List<TileDataViewModel> CurrentPlayerHand => Game?.Players
-        .FirstOrDefault(p => p.Id == GetCurrentPlayerIdInternal())?.Hand ?? new List<TileDataViewModel>();
 
     public BoardModel(IHttpClientFactory httpClientFactory, ILogger<BoardModel> logger)
     {
@@ -38,9 +49,10 @@ public class BoardModel : PageModel
 
             if (response.IsSuccessStatusCode)
             {
-                Game = await response.Content.ReadFromJsonAsync<GameDataViewModel>();
-                CurrentPlayerId = GetCurrentPlayerIdInternal();
-                MoveHistory = Game?.Moves ?? new List<MoveHistoryItem>();
+                var json = await response.Content.ReadAsStringAsync();
+                Game = JsonSerializer.Deserialize<GameDataViewModel>(json, ApiJsonOptions.Default);
+                CurrentPlayerId = GetCurrentPlayerId();
+                MoveHistory = Game?.MoveHistory ?? new List<MoveHistoryItem>();
             }
             else
             {
@@ -54,18 +66,19 @@ public class BoardModel : PageModel
         }
     }
 
-    private string GetCurrentPlayerIdInternal()
-    {
-        // Get from localStorage or session
-        return "local-player";
-    }
-
     /// <summary>
-    /// Helper to get current player ID for CurrentPlayerHand.
+    /// Gets the current player ID from the API response.
+    /// Falls back to the first player if not set.
     /// </summary>
     public string GetCurrentPlayerId()
     {
-        return GetCurrentPlayerIdInternal();
+        if (Game?.CurrentPlayerId != null)
+            return Game.CurrentPlayerId;
+
+        if (Game?.Players.Count > 0)
+            return Game.Players[0].Id;
+
+        return string.Empty;
     }
 }
 
@@ -74,15 +87,32 @@ public class BoardModel : PageModel
 /// </summary>
 public class GameDataViewModel
 {
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("currentPlayerId")]
     public string? CurrentPlayerId { get; set; }
+
+    [JsonPropertyName("players")]
     public List<PlayerDataViewModel> Players { get; set; } = new();
+
+    [JsonPropertyName("board")]
     public List<List<TileDataViewModel?>>? Board { get; set; }
+
+    [JsonPropertyName("bagCount")]
     public int BagCount { get; set; }
+
+    [JsonPropertyName("consecutivePasses")]
     public int ConsecutivePasses { get; set; }
+
+    [JsonPropertyName("moveNumber")]
     public int MoveNumber { get; set; }
-    public List<MoveHistoryItem>? Moves { get; set; }
+
+    [JsonPropertyName("moveHistory")]
+    public List<MoveHistoryItem>? MoveHistory { get; set; }
 }
 
 /// <summary>
@@ -90,9 +120,16 @@ public class GameDataViewModel
 /// </summary>
 public class PlayerDataViewModel
 {
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
+
+    [JsonPropertyName("score")]
     public int Score { get; set; }
+
+    [JsonPropertyName("hand")]
     public List<TileDataViewModel> Hand { get; set; } = new();
 }
 
@@ -101,10 +138,19 @@ public class PlayerDataViewModel
 /// </summary>
 public class TileDataViewModel
 {
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("letter")]
     public string Letter { get; set; } = string.Empty;
-    public string BlankRepresentation { get; set; } = string.Empty;
+
+    [JsonPropertyName("blankRepresentation")]
+    public string? BlankRepresentation { get; set; }
+
+    [JsonPropertyName("points")]
     public int Points { get; set; }
+
+    [JsonPropertyName("isBlank")]
     public bool IsBlank { get; set; }
 }
 
@@ -113,11 +159,24 @@ public class TileDataViewModel
 /// </summary>
 public class MoveHistoryItem
 {
+    [JsonPropertyName("playerId")]
     public string PlayerId { get; set; } = string.Empty;
+
+    [JsonPropertyName("playerName")]
     public string PlayerName { get; set; } = string.Empty;
+
+    [JsonPropertyName("word")]
     public string Word { get; set; } = string.Empty;
+
+    [JsonPropertyName("points")]
     public int Points { get; set; }
+
+    [JsonPropertyName("row")]
     public int Row { get; set; }
+
+    [JsonPropertyName("column")]
     public int Column { get; set; }
+
+    [JsonPropertyName("isHorizontal")]
     public bool IsHorizontal { get; set; }
 }
