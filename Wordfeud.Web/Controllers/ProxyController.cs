@@ -38,10 +38,13 @@ public class ProxyController : Controller
 
         foreach (var header in HttpContext.Request.Headers)
         {
-            if (!header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
+            var lowerKey = header.Key.ToLowerInvariant();
+            if (lowerKey == "host" || lowerKey == "content-length" ||
+                lowerKey == "transfer-encoding" || lowerKey == "connection")
             {
-                requestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.AsEnumerable());
+                continue;
             }
+            requestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.AsEnumerable());
         }
 
         if (HttpContext.Request.HasFormContentType || 
