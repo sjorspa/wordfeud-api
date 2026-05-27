@@ -107,33 +107,26 @@ public class DutchDictionaryService : IDutchDictionaryService
     }
 
     /// <inheritdoc />
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
         if (_isInitialized)
-            return;
+            return Task.CompletedTask;
 
-        try
+        var embeddedWords = LoadFromEmbeddedResource();
+        if (embeddedWords.Any())
         {
-            // Try to load from embedded resource first
-            var embeddedWords = LoadFromEmbeddedResource();
-            if (embeddedWords.Any())
+            foreach (var word in embeddedWords)
             {
-                foreach (var word in embeddedWords)
-                {
-                    _words.Add(NormalizeDiacritics(word));
-                }
-                _isInitialized = true;
-                _logger.LogInformation("Loaded {Count} words from embedded resource", _words.Count);
-                return;
+                _words.Add(NormalizeDiacritics(word));
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to load embedded dictionary, attempting HTTP download");
+            _isInitialized = true;
+            _logger.LogInformation("Loaded {Count} words from embedded resource", _words.Count);
+            return Task.CompletedTask;
         }
 
-        // Fallback: try to download from OpenTaal
-        await InitializeFromOpenTaalAsync();
+        _logger.LogError("Failed to load embedded Dutch dictionary. Falling back to limited word validation.");
+        _isInitialized = true;
+        return Task.CompletedTask;
     }
 
     private IEnumerable<string> LoadFromEmbeddedResource()
@@ -156,44 +149,5 @@ public class DutchDictionaryService : IDutchDictionaryService
         }
 
         return Enumerable.Empty<string>();
-    }
-
-    private async Task InitializeFromOpenTaalAsync()
-    {
-        var url = "https://raw.githubusercontent.com/OpenTaal/opentaal-wordlist/refs/heads/master/wordlist.txt";
-        var maxRetries = 3;
-        var delayMs = 1000;
-
-        for (var attempt = 1; attempt <= maxRetries; attempt++)
-        {
-            try
-            {
-                using var httpClient = new HttpClient();
-                httpClient.Timeout = TimeSpan.FromSeconds(5);
-
-                var content = await httpClient.GetStringAsync(url);
-                var words = content
-                    .Split('\n', '\r', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    .Where(w => w.Length >= 2 && w.All(char.IsAsciiLetter))
-                    .ToArray();
-
-                _words.UnionWith(words);
-                _isInitialized = true;
-
-                _logger.LogInformation("Loaded {Count} words from OpenTaal API (attempt {Attempt})", _words.Count, attempt);
-                return;
-            }
-            catch (Exception ex) when (attempt < maxRetries)
-            {
-                delayMs *= 2;
-                _logger.LogWarning(ex, "OpenTaal fetch failed (attempt {Attempt}/{MaxRetries}), retrying in {Delay}ms",
-                    attempt, maxRetries, delayMs);
-                await Task.Delay(delayMs);
-            }
-        }
-
-        _logger.LogError("Failed to load Dutch dictionary from OpenTaal after {MaxRetries} attempts. Using fallback validation.",
-            maxRetries);
-        _isInitialized = true;
     }
 }

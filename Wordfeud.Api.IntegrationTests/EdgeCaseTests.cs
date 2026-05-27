@@ -362,6 +362,7 @@ public class EdgeCaseTests : IntegrationTestBase
 
         var swapRequest = new
         {
+            playerId = playerId,
             tileIds = player.Hand.Take(3).Select(t => t.Id).ToList()
         };
 
@@ -386,6 +387,7 @@ public class EdgeCaseTests : IntegrationTestBase
 
         var swapRequest = new
         {
+            playerId = otherPlayer.Id,
             tileIds = otherPlayer.Hand.Take(1).Select(t => t.Id).ToList()
         };
 
@@ -470,7 +472,7 @@ public class EdgeCaseTests : IntegrationTestBase
             currentGame = await TestHelpers.ReadAsGameAsync(gameState);
             currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
 
-            var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={currentPlayer.Id}", new { });
+            var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentPlayer.Id });
             passResponse.EnsureSuccessStatusCode();
         }
 
@@ -537,7 +539,7 @@ public class EdgeCaseTests : IntegrationTestBase
             currentGame = await TestHelpers.ReadAsGameAsync(gameState);
             currentPlayer = currentGame!.Players.First(p => p.Id == currentGame.CurrentPlayerId);
 
-            var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass?playerId={currentPlayer.Id}", new { });
+            var passResponse = await Client.PostAsJsonAsync($"/api/games/{game.Id}/pass", new { playerId = currentPlayer.Id });
             passResponse.EnsureSuccessStatusCode();
         }
 
@@ -748,6 +750,7 @@ public class EdgeCaseTests : IntegrationTestBase
         // Arrange
         var placeRequest = new
         {
+            playerId = "player-1",
             tiles = new[]
             {
                 new

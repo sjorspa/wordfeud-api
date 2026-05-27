@@ -13,7 +13,7 @@ public interface IDutchDictionaryService
     bool Contains(string word);
 
     /// <summary>
-    /// Initializes the dictionary from OpenTaal data.
+    /// Initializes the dictionary from the embedded resource.
     /// </summary>
     Task InitializeAsync();
 
