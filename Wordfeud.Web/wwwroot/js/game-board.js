@@ -300,6 +300,22 @@ function handleDrop(event, row, col) {
     cell.classList.add('drop-hover');
     setTimeout(() => cell.classList.remove('drop-hover'), 200);
 
+    // Get tile data from the hand to render it visually
+    const hand = getCurrentHand();
+    const tileData = hand.find(t => t.id === tileId);
+
+    // Render the tile visually on the board cell
+    if (cell && tileData) {
+        const tileEl = document.createElement('div');
+        tileEl.className = 'placed-tile';
+        tileEl.innerHTML = `
+            ${tileData.isBlank ? '?' : tileData.letter}
+            <span class="points">${tileData.points}</span>
+            <button class="remove-btn" onclick="removePlacedTile(${row}, ${col})">&times;</button>
+        `;
+        cell.appendChild(tileEl);
+    }
+
     updatePlacedTilesPreview();
     GameState.draggedTileId = null;
 }
@@ -426,16 +442,27 @@ async function placeWord() {
     const firstRow = parseInt(tiles[0][0].split(',')[0]);
     const firstCol = parseInt(tiles[0][0].split(',')[1]);
 
+    // Get the current hand to find tile data (letter, isBlank, points)
+    const hand = getCurrentHand();
+
+    // Build the request body matching the API DTO: {letter, isBlank, tileId, row, column}
     const body = {
-        tiles: tiles.map(([key, tileId]) => ({
-            position: { row: parseInt(key.split(',')[0]), column: parseInt(key.split(',')[1]) },
-            tileId: tileId
-        }))
+        tiles: tiles.map(([key, tileId]) => {
+            const [row, col] = key.split(',').map(Number);
+            const tileData = hand.find(t => t.id === tileId);
+            return {
+                letter: tileData?.letter || '',
+                isBlank: tileData?.isBlank || false,
+                tileId: tileId,
+                row: row,
+                column: col
+            };
+        })
     };
 
     try {
         showLoading('place-btn');
-        const result = await apiPost(`/games/${GameState.gameId}/place-tiles`, body);
+        const result = await apiPost(`/games/${GameState.gameId}/place?playerId=${GameState.currentPlayerId}`, body);
 
         if (result) {
             showToast(`Word placed! +${result.points || 0} points`, 'success');
@@ -479,7 +506,7 @@ async function passTurn() {
     }
 
     try {
-        const result = await apiPost(`/games/${GameState.gameId}/pass`, {});
+        const result = await apiPost(`/games/${GameState.gameId}/pass?playerId=${GameState.currentPlayerId}`, {});
         showToast('Turn passed', 'info');
         await loadGameState();
     } catch (error) {
@@ -538,7 +565,7 @@ async function confirmSwap() {
     }
 
     try {
-        const result = await apiPost(`/games/${GameState.gameId}/swap-tiles`, {
+        const result = await apiPost(`/games/${GameState.gameId}/swap?playerId=${GameState.currentPlayerId}`, {
             tileIds: Array.from(GameState.swapSelectedTiles)
         });
 
