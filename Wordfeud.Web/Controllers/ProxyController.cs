@@ -29,17 +29,13 @@ public class ProxyController : Controller
     [Route("api/{*path}")]
     public async Task<IActionResult> Proxy(string path)
     {
-        // Build the target URL
-        var targetPath = string.IsNullOrEmpty(path) ? "" : $"/{path}";
+        var targetPath = string.IsNullOrEmpty(path) ? "/api" : $"/api/{path}";
         var targetUrl = $"{_apiBaseUrl.TrimEnd('/')}{targetPath}";
 
-        // Forward the request method and content
         using var requestMessage = new HttpRequestMessage();
-
         requestMessage.Method = new HttpMethod(HttpContext.Request.Method);
         requestMessage.RequestUri = new Uri(targetUrl);
 
-        // Copy headers (except host-related ones)
         foreach (var header in HttpContext.Request.Headers)
         {
             if (!header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase))
@@ -48,7 +44,6 @@ public class ProxyController : Controller
             }
         }
 
-        // Forward the body for POST/PUT/PATCH
         if (HttpContext.Request.HasFormContentType || HttpContext.Request.ContentLength > 0)
         {
             var bodyBytes = await ReadBodyAsync();
@@ -67,11 +62,9 @@ public class ProxyController : Controller
         {
             var response = await _httpClient.SendAsync(requestMessage, HttpContext.RequestAborted);
 
-            // Read response body into bytes
             var bodyBytes = await response.Content.ReadAsByteArrayAsync();
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
 
-            // Set status code and headers on Response
             Response.StatusCode = (int)response.StatusCode;
             foreach (var header in response.Headers)
             {
@@ -81,18 +74,15 @@ public class ProxyController : Controller
                 }
             }
 
-            // Return body via File() helper
             return File(bodyBytes, contentType);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error proxying request to {TargetUrl}", targetUrl);
-            return new ContentResult
-            {
-                Content = System.Text.Json.JsonSerializer.Serialize(new { error = "Bad Gateway", message = "Unable to reach the API backend service." }),
-                ContentType = "application/json",
-                StatusCode = 502
-            };
+            Response.StatusCode = 502;
+            Response.ContentType = "application/json";
+            var errorJson = System.Text.Json.JsonSerializer.Serialize(new { error = "Bad Gateway", message = "Unable to reach the API backend service." });
+            return Content(errorJson, "application/json");
         }
     }
 
