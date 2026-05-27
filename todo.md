@@ -41,7 +41,7 @@
 - [ ] **Dark/light theme toggle** - Currently only dark theme
 - [ ] **Board zoom controls** - No zoom in/out for the board
 - [ ] **Tile highlight on hover** - Subtle hover effect on rack tiles
-- [ ] **Suggested moves** - No hint system for valid placements
+- [x] **Suggested moves** - Not needed (out of scope)
 - [ ] **Board coordinate labels** - No row/column labels visible
 - [ ] **Last move highlight** - Don't highlight which tiles were just placed
 - [ ] **Loading skeleton screens** - Currently shows spinner, could use skeleton
