@@ -101,56 +101,78 @@
                     <span class="font-semibold">@(Model.Game.CurrentPlayerId == Model.CurrentPlayerId ? "Your Turn" : "Opponent's Turn")</span>
                 </div>
 
-                <!-- Board Container -->
-                <div class="bg-board-dark p-1 sm:p-2 rounded-xl shadow-2xl">
-                    <div id="board-container" class="grid grid-cols-15 gap-0 border-2 border-board-border"
-                         style="width: min(85vw, 525px); height: min(85vw, 525px);">
-                        @for (var row = 0; row < 15; row++)
+                <!-- Board Container with coordinate labels -->
+                <div class="relative">
+                    <!-- Column labels (A-O) -->
+                    <div class="flex justify-center mb-1">
+                        <div class="w-6 sm:w-8"></div>
+                        @for (var col = 0; col < 15; col++)
                         {
-                            @for (var col = 0; col < 15; col++)
-                            {
-                                var bonus = GetBonusType(row, col);
-                                var cellClass = "relative flex items-center justify-center text-[0.45rem] sm:text-[0.6rem] font-bold uppercase select-none";
-                                var bonusClass = "";
-                                var icon = "";
-
-                                switch (bonus)
-                                {
-                                    case "TW":
-                                        bonusClass = "bonus-tws";
-                                        icon = "TW";
-                                        break;
-                                    case "DW":
-                                        bonusClass = "bonus-dws";
-                                        icon = "DW";
-                                        break;
-                                    case "DL":
-                                        bonusClass = "bonus-dls";
-                                        icon = "DL";
-                                        break;
-                                    case "TL":
-                                        bonusClass = "bonus-tls";
-                                        icon = "TL";
-                                        break;
-                                    case "STAR":
-                                        bonusClass = "bonus-star";
-                                        icon = "★";
-                                        break;
-                                }
-
-                                <div class="@(cellClass) @(bonusClass) board-cell"
-                                     style="background: @(string.IsNullOrEmpty(bonus) ? "#1a6b3c" : "inherit");"
-                                     data-row="@row" data-col="@col"
-                                     ondragover="event.preventDefault(); this.classList.add('drop-hover')"
-                                     ondragleave="this.classList.remove('drop-hover')"
-                                     ondrop="handleDrop(event, @row, @col)">
-                                    @if (!string.IsNullOrEmpty(icon))
-                                    {
-                                        <span class="drop-shadow-sm leading-none">@icon</span>
-                                    }
-                                </div>
-                            }
+                            <span class="flex-1 text-center text-[0.55rem] sm:text-[0.65rem] font-mono text-gray-400 select-none">@((char)('A' + col))</span>
                         }
+                    </div>
+
+                    <div class="flex">
+                        <!-- Row labels (1-15) -->
+                        <div class="flex flex-col justify-center w-6 sm:w-8">
+                            @for (var row = 0; row < 15; row++)
+                            {
+                                <span class="flex-1 flex items-center justify-center text-[0.55rem] sm:text-[0.65rem] font-mono text-gray-400 select-none">@(row + 1)</span>
+                            }
+                        </div>
+
+                        <!-- Board -->
+                        <div class="bg-board-dark p-1 sm:p-2 rounded-xl shadow-2xl">
+                            <div id="board-container" class="grid grid-cols-15 gap-0 border-2 border-board-border"
+                                 style="width: min(85vw, 525px); height: min(85vw, 525px);">
+                                @for (var row = 0; row < 15; row++)
+                                {
+                                    @for (var col = 0; col < 15; col++)
+                                    {
+                                        var bonus = GetBonusType(row, col);
+                                        var cellClass = "relative flex items-center justify-center text-[0.45rem] sm:text-[0.6rem] font-bold uppercase select-none";
+                                        var bonusClass = "";
+                                        var icon = "";
+
+                                        switch (bonus)
+                                        {
+                                            case "TW":
+                                                bonusClass = "bonus-tws";
+                                                icon = "TW";
+                                                break;
+                                            case "DW":
+                                                bonusClass = "bonus-dws";
+                                                icon = "DW";
+                                                break;
+                                            case "DL":
+                                                bonusClass = "bonus-dls";
+                                                icon = "DL";
+                                                break;
+                                            case "TL":
+                                                bonusClass = "bonus-tls";
+                                                icon = "TL";
+                                                break;
+                                            case "STAR":
+                                                bonusClass = "bonus-star";
+                                                icon = "★";
+                                                break;
+                                        }
+
+                                        <div class="@(cellClass) @(bonusClass) board-cell"
+                                             style="background: @(string.IsNullOrEmpty(bonus) ? "#1a6b3c" : "inherit");"
+                                             data-row="@row" data-col="@col"
+                                             ondragover="event.preventDefault(); this.classList.add('drop-hover')"
+                                             ondragleave="this.classList.remove('drop-hover')"
+                                             ondrop="handleDrop(event, @row, @col)">
+                                            @if (!string.IsNullOrEmpty(icon))
+                                            {
+                                                <span class="drop-shadow-sm leading-none">@icon</span>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
                     </div>
                 </div>
 
