@@ -1191,8 +1191,9 @@ async function selectBlankLetter(letter) {
         }
     }
 
-    // Store the chosen letter so placeWord() can read it
-    GameState.blankLetterOverrides.set(GameState.blankTileTargetId, letter);
+    // Store the chosen letter BEFORE closing the modal (which clears blankTileTargetId)
+    const targetTileId = GameState.blankTileTargetId;
+    GameState.blankLetterOverrides.set(targetTileId, letter);
 
     updatePlacedTilesPreview();
     closeBlankModal();
