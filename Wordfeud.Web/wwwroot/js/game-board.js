@@ -92,6 +92,7 @@ function undoLastMove() {
     });
 
     updatePlacedTilesPreview();
+    updateButtonStates(GameState.lastGameState);
     showToast('Tiles returned to rack', 'info');
 }
 
@@ -421,6 +422,7 @@ async function loadGameState() {
         updateBoard(data.board || []);
         updateTileRack(data.players.find(p => p.id === GameState.currentPlayerId)?.hand || []);
         updateTurnIndicator(data.currentPlayerId);
+        updateButtonStates(data);
 
         // Check if game is over
         if (data.status === 'Finished') {
@@ -468,6 +470,7 @@ function startGameLoop() {
                 updateBoard(data.board || []);
                 updateTileRack(data.players.find(p => p.id === GameState.currentPlayerId)?.hand || []);
                 updateTurnIndicator(data.currentPlayerId);
+                updateButtonStates(data);
 
                 // If it's our turn and we have no placed tiles, notify
                 if (data.currentPlayerId === GameState.currentPlayerId && GameState.placedTiles.size === 0) {
@@ -556,6 +559,60 @@ function updateTurnIndicator(currentPlayerId) {
     const isYourTurn = currentPlayerId === GameState.currentPlayerId;
     indicator.className = `mb-4 px-6 py-2 rounded-full ${isYourTurn ? 'bg-green-600' : 'bg-yellow-600'}`;
     indicator.innerHTML = `<span class="font-semibold">${isYourTurn ? 'Your Turn' : "Opponent's Turn"}</span>`;
+}
+
+// ============================================
+// Button Enable/Disable Logic
+// ============================================
+function updateButtonStates(gameData) {
+    if (!gameData) return;
+
+    const { status, currentPlayerId } = gameData;
+    const isYourTurn = currentPlayerId === GameState.currentPlayerId;
+    const isFinished = status === 'Finished';
+    const hasPlacedTiles = GameState.placedTiles.size > 0;
+    const hand = gameData.players?.find(p => p.id === GameState.currentPlayerId)?.hand || [];
+    const hasHandTiles = hand.length > 0;
+    const bagCount = gameData.bagCount ?? 0;
+
+    // Place Word: enabled only when it's your turn and you have placed tiles
+    const placeBtn = document.getElementById('place-btn');
+    if (placeBtn) {
+        placeBtn.disabled = !(isYourTurn && hasPlacedTiles);
+    }
+
+    // Recall: enabled only when it's your turn and you have placed tiles
+    const recallBtn = document.querySelector('button[aria-label="Recall tiles to rack"]');
+    if (recallBtn) {
+        recallBtn.disabled = !(isYourTurn && hasPlacedTiles);
+    }
+
+    // Undo: enabled only when it's your turn and you have placed tiles
+    const undoBtn = document.getElementById('undo-btn');
+    if (undoBtn) {
+        const canUndo = isYourTurn && hasPlacedTiles && GameState.undoHistory.size > 0;
+        undoBtn.disabled = !canUndo;
+        // Show undo button only when it's your turn and you have placed tiles
+        undoBtn.style.display = (isYourTurn && hasPlacedTiles) ? '' : 'none';
+    }
+
+    // Pass: enabled only when it's your turn (and no tiles placed)
+    const passBtn = document.querySelector('button[aria-label="Pass turn to opponent"]');
+    if (passBtn) {
+        passBtn.disabled = !(isYourTurn && !hasPlacedTiles);
+    }
+
+    // Swap: enabled when it's your turn, you have tiles in hand, and bag has at least 3 tiles
+    const swapBtn = document.querySelector('button[aria-label="Swap tiles with bag"]');
+    if (swapBtn) {
+        swapBtn.disabled = !(isYourTurn && hasHandTiles && bagCount >= 3);
+    }
+
+    // Leave: always enabled
+    const leaveBtn = document.querySelector('button[aria-label="Leave this game"]');
+    if (leaveBtn) {
+        leaveBtn.disabled = false;
+    }
 }
 
 function updateTileRack(hand) {
@@ -802,6 +859,7 @@ function handleDrop(event, row, col) {
     }
 
     updatePlacedTilesPreview();
+    updateButtonStates(GameState.lastGameState);
     GameState.draggedTileId = null;
 }
 
@@ -854,6 +912,7 @@ function removePlacedTile(row, col) {
     }
 
     updatePlacedTilesPreview();
+    updateButtonStates(GameState.lastGameState);
 }
 
 // ============================================
@@ -985,6 +1044,11 @@ async function recallTiles() {
     document.querySelectorAll('.placed-tile').forEach(el => el.remove());
     updatePlacedTilesPreview();
     showToast('Tiles recalled', 'info');
+
+    // Update button states since we don't refresh from server
+    if (GameState.lastGameState) {
+        updateButtonStates(GameState.lastGameState);
+    }
 }
 
 // ============================================
