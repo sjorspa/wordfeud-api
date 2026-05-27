@@ -17,7 +17,10 @@ function copyGameId() {
 
 // On page load, if we have a gameId, start auto-refresh
 document.addEventListener('DOMContentLoaded', () => {
-    const gameId = '@Model.GameId';
+    // Get game ID from data attribute (Razor evaluates this in the .cshtml file)
+    const container = document.querySelector('[data-game-id]');
+    const gameId = container ? container.dataset.gameId : '';
+    
     if (gameId) {
         // Store game ID for later
         setStoredGameId(gameId);
