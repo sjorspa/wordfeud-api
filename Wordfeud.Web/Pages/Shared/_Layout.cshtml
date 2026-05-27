@@ -250,7 +250,11 @@
             to { opacity: 1; transform: scale(1); }
         }
 
-        /* Board cell hover */
+        /* Board cell - fixed size, slightly larger than tiles */
+        .board-cell {
+            width: 3rem;
+            height: 3rem;
+        }
         .board-cell:hover { filter: brightness(1.1); }
         .board-cell.drop-hover { box-shadow: inset 0 0 0 3px #f0c040; }
         .board-cell.drop-invalid { box-shadow: inset 0 0 0 3px #e94560; }
