@@ -20,7 +20,7 @@ public class IndexModel : PageModel
         _logger = logger;
     }
 
-    public async Task OnGet()
+    public void OnGet()
     {
         // For the home page, we just show the welcome screen.
         // Active games would come from a real backend service with user accounts.
