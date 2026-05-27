@@ -52,7 +52,9 @@ public class NewGameModel : PageModel
                 }
                 
                 ShowWaiting = !string.IsNullOrEmpty(GameId);
-                return Page();
+                
+                // Redirect to the game board
+                return RedirectToPage("/Game/Board", new { GameId = GameId });
             }
 
             var problem = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
