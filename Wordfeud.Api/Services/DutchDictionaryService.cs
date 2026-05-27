@@ -155,7 +155,9 @@ public class DutchDictionaryService : IDutchDictionaryService
                 {
                     using var reader = new StreamReader(stream);
                     var content = reader.ReadToEnd();
-                    return content.Split('\n', '\r', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    return content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(w => w.Trim())
+                        .Where(w => w.Length > 0);
                 }
             }
         }
