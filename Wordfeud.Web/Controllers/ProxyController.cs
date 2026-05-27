@@ -84,9 +84,10 @@ public class ProxyController : ControllerBase
 
             // Copy response body
             var bodyBytes = await response.Content.ReadAsByteArrayAsync();
+            HttpContext.Response.StatusCode = (int)response.StatusCode;
             await HttpContext.Response.Body.WriteAsync(bodyBytes, HttpContext.RequestAborted);
 
-            return new StatusCodeResult((int)response.StatusCode);
+            return new EmptyResult();
         }
         catch (Exception ex)
         {
