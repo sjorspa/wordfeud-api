@@ -40,8 +40,17 @@ public class NewGameModel : PageModel
 
             if (response.IsSuccessStatusCode)
             {
-                var game = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
-                GameId = game?["id"]?.ToString();
+                var game = await response.Content.ReadFromJsonAsync<GameDataViewModel>(System.Text.Json.JsonSerializerOptions.Default);
+                GameId = game?.Id;
+                
+                // Store player ID in session for player 1
+                if (game?.Players != null && game.Players.Count > 0)
+                {
+                    var firstPlayer = game.Players[0];
+                    HttpContext.Session.SetString("Wordfeud_PlayerId", firstPlayer.Id);
+                    HttpContext.Session.SetString("Wordfeud_PlayerName", PlayerName);
+                }
+                
                 ShowWaiting = !string.IsNullOrEmpty(GameId);
                 return Page();
             }

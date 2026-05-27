@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Linq;
 
 namespace Wordfeud.Web.Pages.Game;
 
@@ -47,8 +49,21 @@ public class JoinGameModel : PageModel
 
             if (response.IsSuccessStatusCode)
             {
+                // Get the game data from the response and store player ID in session
+                var gameData = await response.Content.ReadFromJsonAsync<GameDataViewModel>(System.Text.Json.JsonSerializerOptions.Default);
+                if (gameData?.Players != null && gameData.Players.Count > 0)
+                {
+                    // Find the player that just joined (by name match)
+                    var joinedPlayer = gameData.Players.FirstOrDefault(p => 
+                        p.Name.Equals(PlayerName, StringComparison.OrdinalIgnoreCase)) 
+                        ?? gameData.Players[0];
+                    
+                    HttpContext.Session.SetString("Wordfeud_PlayerId", joinedPlayer.Id);
+                    HttpContext.Session.SetString("Wordfeud_PlayerName", PlayerName);
+                }
+                
                 // Redirect to the game board
-                return RedirectToPage("/Game/Board", new { id = GameId });
+                return RedirectToPage("/Game/Board", new { GameId = GameId });
             }
 
             var problem = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();

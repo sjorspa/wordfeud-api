@@ -67,11 +67,17 @@ public class BoardModel : PageModel
     }
 
     /// <summary>
-    /// Gets the current player ID from the API response.
-    /// Falls back to the first player if not set.
+    /// Gets the current player ID from the session (the logged-in player).
+    /// Falls back to the first player if not set in session.
     /// </summary>
     public string GetCurrentPlayerId()
     {
+        // First, try to get the logged-in player ID from session
+        var sessionId = HttpContext?.Session?.GetString("Wordfeud_PlayerId");
+        if (!string.IsNullOrEmpty(sessionId))
+            return sessionId;
+
+        // Fallback: use the current turn player (for player 1 who created the game)
         if (Game?.CurrentPlayerId != null)
             return Game.CurrentPlayerId;
 

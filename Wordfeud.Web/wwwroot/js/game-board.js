@@ -22,15 +22,17 @@ const GameState = {
 // Initialize Game Board
 // ============================================
 document.addEventListener('DOMContentLoaded', () => {
-    const gameIdEl = document.querySelector('#game-id-display');
-    if (gameIdEl) {
-        GameState.gameId = gameIdEl.textContent.trim();
-    }
-
-    // Also get from URL
+    // Get game ID from URL
     const pathParts = window.location.pathname.split('/');
     if (pathParts.length >= 3) {
         GameState.gameId = pathParts[2];
+    }
+
+    // Initialize player ID from hidden input
+    const hiddenEl = document.getElementById('current-player-id');
+    if (hiddenEl && hiddenEl.value) {
+        GameState.currentPlayerId = hiddenEl.value;
+        localStorage.setItem('wordfeud-player-id', hiddenEl.value);
     }
 
     if (GameState.gameId) {
@@ -51,7 +53,16 @@ async function loadGameState() {
         if (!data) return;
 
         GameState.lastGameState = JSON.parse(JSON.stringify(data));
-        GameState.currentPlayerId = getCurrentPlayerId();
+        
+        // Initialize currentPlayerId from hidden input or localStorage
+        if (!GameState.currentPlayerId) {
+            const hiddenEl = document.getElementById('current-player-id');
+            if (hiddenEl && hiddenEl.value) {
+                GameState.currentPlayerId = hiddenEl.value;
+            } else {
+                GameState.currentPlayerId = localStorage.getItem('wordfeud-player-id') || 'local-player';
+            }
+        }
 
         // Update UI based on game state
         updateScorePanel(data.players);
@@ -630,13 +641,28 @@ function showGameOver(data) {
 // Helper Functions
 // ============================================
 function getCurrentPlayerId() {
-    // Get from localStorage or use first player
+    // Get from localStorage (set by server-side session after join)
+    const playerId = localStorage.getItem('wordfeud-player-id');
+    if (playerId) {
+        GameState.currentPlayerId = playerId;
+        return playerId;
+    }
+    
+    // Fallback: get from hidden input on page
+    const hiddenEl = document.getElementById('current-player-id');
+    if (hiddenEl && hiddenEl.value) {
+        GameState.currentPlayerId = hiddenEl.value;
+        return hiddenEl.value;
+    }
+    
+    // Last fallback to first player
     return GameState.currentPlayerId || 'local-player';
 }
 
 function getCurrentHand() {
     if (!GameState.lastGameState || !GameState.lastGameState.players) return [];
-    const player = GameState.lastGameState.players.find(p => p.id === GameState.currentPlayerId);
+    const playerId = GameState.currentPlayerId || localStorage.getItem('wordfeud-player-id');
+    const player = GameState.lastGameState.players.find(p => p.id === playerId);
     return player ? player.hand : [];
 }
 

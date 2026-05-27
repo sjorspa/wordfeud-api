@@ -16,6 +16,9 @@
 
     @if (Model.Game != null)
     {
+        <!-- Hidden input for current player ID (set by server-side session) -->
+        <input type="hidden" id="current-player-id" value="@Model.CurrentPlayerId" />
+        
         <div class="flex flex-col lg:flex-row gap-6">
             <!-- Left Panel: Score & Info -->
             <div class="lg:w-64 order-2 lg:order-1">
