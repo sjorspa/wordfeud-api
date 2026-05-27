@@ -36,6 +36,13 @@
         .bonus-tls { background-color: #6090e0; color: white; }
         .bonus-star { background-color: #e94560; color: white; }
 
+        /* Colorblind mode bonus square colors - uses patterns in addition to colors */
+        .colorblind-mode .bonus-tws { background-color: #d62728; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-dws { background-color: #ff7f0e; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-dls { background-color: #2ca02c; color: white; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-tls { background-color: #1f77b4; color: white; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-star { background-color: #d62728; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+
         /* Tile styles */
         .tile {
             width: 2.5rem;
@@ -112,7 +119,7 @@
             box-shadow: 0 0 8px rgba(240, 192, 64, 0.6), 0 2px 4px rgba(0,0,0,0.2);
             animation: lastMovePulse 2s ease-in-out infinite;
         }
-        @keyframes lastMovePulse {
+        @@keyframes lastMovePulse {
             0%, 100% { box-shadow: 0 0 8px rgba(240, 192, 64, 0.4), 0 2px 4px rgba(0,0,0,0.2); }
             50% { box-shadow: 0 0 14px rgba(240, 192, 64, 0.7), 0 2px 6px rgba(0,0,0,0.3); }
         }
