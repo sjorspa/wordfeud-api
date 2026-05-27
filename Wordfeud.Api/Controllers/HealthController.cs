@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Wordfeud.Api.Interfaces;
 
 namespace Wordfeud.Api.Controllers;
 
@@ -9,6 +10,13 @@ namespace Wordfeud.Api.Controllers;
 [Route("health")]
 public class HealthController : ControllerBase
 {
+    private readonly IDutchDictionaryService _dictionaryService;
+
+    public HealthController(IDutchDictionaryService dictionaryService)
+    {
+        _dictionaryService = dictionaryService;
+    }
+
     /// <summary>
     /// Performs a liveness probe check.
     /// Returns 200 OK if the application is running.
@@ -36,5 +44,16 @@ public class HealthController : ControllerBase
         // external service availability, etc. For this in-memory API,
         // the application is ready as long as it is running.
         return Ok(new { status = "ready", timestamp = DateTime.UtcNow });
+    }
+
+    /// <summary>
+    /// Returns the number of words loaded in the Dutch dictionary.
+    /// </summary>
+    /// <returns>A 200 OK response with the word count.</returns>
+    [HttpGet("wordcount")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult WordCount()
+    {
+        return Ok(new { wordCount = _dictionaryService.WordCount, isInitialized = _dictionaryService.IsInitialized });
     }
 }
