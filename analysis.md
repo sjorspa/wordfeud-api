@@ -1849,6 +1849,193 @@ The recommended prioritization is:
 | P2 | Medium-term | HTTPS, monitoring, configuration |
 | P3 | Long-term | Mobile, accessibility, K8s |
 
+---
+
+## 16. Top 50 Tasks Ranked by Importance
+
+The following list contains 50 actionable tasks ranked by importance. Tasks are grouped into four tiers: **Critical** (must have for production), **High** (important for quality), **Medium** (should have), and **Low** (nice to have). Within each tier, tasks are ranked from most to least important.
+
+### Tier 1 — Critical (Must Have for Production)
+
+| # | Task | Priority | Area | Effort | Description |
+|---|------|----------|------|--------|-------------|
+| 1 | **Implement persistent game storage** | P0 | Architecture | Large | Replace in-memory `Dictionary<string, Game>` with a persistent store (Redis, PostgreSQL, or SQLite). Implement save/load on every game state change. This is the single most critical gap — without persistence, all game data is lost on restart. |
+| 2 | **Implement authentication** | P0 | Security | Large | Add JWT Bearer tokens or ASP.NET Identity. Require authentication for all game operations. Store player identity in token claims, not session cookies. Generate a secure secret key from environment configuration. |
+| 3 | **Implement authorization** | P0 | Security | Large | Add `[Authorize]` attributes to all game endpoints. Verify that the authenticated user is the one making the request (e.g., the player placing tiles must be the current turn's player). Implement ownership checks for game management actions. |
+| 4 | **Sanitize all user input** | P0 | Security | Small | HTML-encode player names before rendering. Use `HtmlEncoder.Default.Encode()` or `textContent` instead of `innerHTML`. Validate player name length (max 20 chars). Block special characters. Apply input validation on all DTOs using DataAnnotations or FluentValidation. |
+| 5 | **Fix thread safety in game store** | P0 | Reliability | Medium | Replace `Dictionary<string, Game>` with `ConcurrentDictionary<string, Game>`. Add locking around game state mutations in `GameService`. Use `lock` blocks or `SemaphoreSlim` for critical sections (tile placement, turn switching, score updates). |
+| 6 | **Implement real-time game updates** | P0 | Performance | Large | Replace 3-second polling with SignalR or WebSocket. Add a `GameHub` that broadcasts game state changes to all connected clients in a game. Handle reconnection and state sync on reconnect. This is critical for competitive play. |
+| 7 | **Add rate limiting** | P0 | Security | Medium | Implement ASP.NET Core rate limiting middleware. Limit game creation to 5 per minute per IP. Limit tile placement to 10 per second per player. Add rate limit response handling with proper HTTP 429 status codes. |
+| 8 | **Implement global exception handling** | P0 | Reliability | Small | Add a global exception handler middleware (`UseExceptionHandler`). Create a standardized error response format (`{ error, message, code }`). Log all unhandled exceptions with structured data. Return proper HTTP status codes (400, 404, 500). |
+| 9 | **Add HTTPS/TLS to API service** | P0 | Security | Medium | Configure TLS termination for the API service. Use a certificate manager or Let's Encrypt for automated certificate renewal. Enforce HTTPS with `UseHttpsRedirection()`. Update health checks to use HTTPS. |
+| 10 | **Fix session fixation vulnerability** | P0 | Security | Small | Regenerate session ID on game join. Add `SameSite=Lax` attribute to session cookies. Implement session timeout with sliding expiration. Add logout endpoint that clears the session. |
+
+### Tier 2 — High (Important for Quality)
+
+| # | Task | Priority | Area | Effort | Description |
+|---|------|----------|------|--------|-------------|
+| 11 | **Implement proper service lifetime management** | P1 | Architecture | Small | Create `IGameStore` abstraction. Inject it via `AddSingleton` instead of raw `Dictionary`. Ensure `GameService` lifetime matches its dependencies. Add `IHostedService` for dictionary initialization. |
+| 12 | **Implement circuit breaker for API calls** | P1 | Reliability | Medium | Add Polly-based circuit breaker to the `"Api"` HttpClient. Configure retry policy for transient failures (5xx, timeout). Implement fallback responses when the API is unavailable. Add circuit state monitoring. |
+| 13 | **Add structured logging** | P1 | Observability | Medium | Add structured logging for all game mutations (create, join, place, pass, swap). Use correlation IDs for request tracing. Configure log output to a file or external system. Set log levels per category. |
+| 14 | **Implement Swagger only in development** | P1 | Security | Small | Conditionally enable Swagger UI only in `Development` environment. Add API key authentication for Swagger in staging. Document the API with OpenAPI annotations. |
+| 15 | **Extract magic numbers to named constants** | P1 | Code Quality | Small | Create a `GameConstants` class with `InitialHandSize = 7`, `MaxPlayers = 2`, `MaxConsecutivePasses = 2`, `BoardSize = 15`, `TileBagSize = 104`. Replace all hardcoded values in `GameService` and `DutchDictionaryService`. |
+| 16 | **Implement player name validation** | P1 | Security | Small | Add `StringLength(20)` and `RegularExpression` attributes to `CreateGameRequest.PlayerName`. Validate on the server side before creating a game. Return a clear error message for invalid names. |
+| 17 | **Add CORS policy** | P1 | Security | Small | Configure CORS with specific allowed origins (not wildcards). Use `AddCors()` and `UseCors()` in the pipeline. Restrict to the frontend domain in production. Allow only necessary methods and headers. |
+| 18 | **Implement game eviction policy** | P1 | Reliability | Medium | Add a background service that removes finished games from the store after a configurable timeout (e.g., 24 hours). Implement a maximum game count with LRU eviction. Monitor memory usage and alert on thresholds. |
+| 19 | **Add input length limits on proxy** | P1 | Security | Small | Add a maximum request body size (e.g., 1 MB) to prevent large uploads. Configure `Kestrel` max request body size. Add content-length validation in `ProxyController`. |
+| 20 | **Implement proper error responses** | P1 | API Design | Medium | Create a standardized `ProblemDetails` response for all error cases. Use HTTP status codes correctly (400, 401, 403, 404, 409, 429, 500). Add error codes for client-side handling. |
+| 21 | **Add integration tests for concurrent operations** | P1 | Testing | Medium | Test concurrent game creation, joining, and tile placement. Verify no race conditions or data corruption. Test with multiple simultaneous requests to the same game. Use `Parallel.ForEachAsync` in tests. |
+| 22 | **Implement game state validation** | P1 | Reliability | Medium | Validate that tile placements are legal (within board bounds, player has the tiles, it's their turn). Validate that placed tiles form valid words in the dictionary. Reject invalid moves with clear error messages. |
+| 23 | **Add health check for game store** | P1 | Observability | Small | Create a `/health/gamestore` endpoint that returns the number of active games, memory usage, and dictionary status. Include this in the Docker health check or as a separate probe. |
+| 24 | **Fix Dockerfile layer caching** | P1 | DevOps | Small | Separate test project from the production build. Use `.dockerignore` to exclude test projects and unnecessary files. Use `dotnet:8.0-alpine` for smaller runtime images. |
+| 25 | **Implement nullable reference types consistently** | P1 | Code Quality | Medium | Enable `<Nullable>enable</Nullable>` in all project files. Fix all nullable warnings. Use nullable annotations on public APIs. Prefer non-nullable types with defaults over nullable types. |
+
+### Tier 3 — Medium (Should Have)
+
+| # | Task | Priority | Area | Effort | Description |
+|---|------|----------|------|--------|-------------|
+| 26 | **Implement mobile-responsive game board** | P2 | Frontend | Large | Add responsive CSS for the game board. Implement touch-friendly drag-and-drop. Test on various screen sizes (mobile, tablet, desktop). Use CSS media queries and flexible layouts. |
+| 27 | **Add accessibility (ARIA) support** | P2 | Frontend | Medium | Add ARIA labels to all interactive elements. Implement keyboard navigation for tile placement. Add screen reader support for game state announcements. Test with screen readers. |
+| 28 | **Implement dark/light theme toggle** | P2 | Frontend | Small | Add CSS custom properties for theming. Implement a theme toggle button in the UI. Persist theme preference in `localStorage`. Use `prefers-color-scheme` media query for default. |
+| 29 | **Add game export/import** | P2 | Feature | Medium | Allow exporting a game state as JSON. Allow importing a game state from JSON. Useful for game recovery and debugging. Add validation for imported game states. |
+| 30 | **Implement game replay** | P2 | Feature | Medium | Store move history in a serializable format. Implement a replay mode that plays back moves with a time delay. Allow fast-forward and skip controls. |
+| 31 | **Add game search/filter** | P2 | Feature | Small | Implement a list of active games with filtering (by status, player name, creation date). Add pagination for large game lists. |
+| 32 | **Implement proper configuration with IOptions** | P2 | Architecture | Medium | Extract all hardcoded values to `IOptions<GameSettings>`. Add configuration validation at startup (`ValidateOnConfigChange`). Use `ConfigureOptions` for defaults. |
+| 33 | **Add Prometheus metrics** | P2 | Observability | Medium | Add metrics for game count, active games, requests per minute, error rate, latency percentiles. Configure Prometheus scraping endpoint. Add Grafana dashboards. |
+| 34 | **Implement OpenTelemetry tracing** | P2 | Observability | Medium | Add distributed tracing to the web→API request chain. Configure trace context propagation. Add spans for key operations (game creation, tile placement). Export traces to Jaeger or similar. |
+| 35 | **Add game statistics** | P2 | Feature | Medium | Track and display game statistics (total games, average game length, most common moves). Add per-player statistics (wins, losses, average score). |
+| 36 | **Implement tile bag shuffle verification** | P2 | Reliability | Small | Verify that the tile bag is properly shuffled using statistical tests. Ensure no tile is drawn more times than it exists. Log bag state for debugging. |
+| 37 | **Add game timeout** | P2 | Feature | Medium | Implement a per-turn timeout (e.g., 5 minutes). Add a countdown timer in the UI. Auto-pass the turn when the timeout expires. Notify the player before timeout. |
+| 38 | **Implement proper logging of game events** | P2 | Observability | Small | Log every game event (create, join, place, pass, swap, game over) with correlation IDs. Include player names, game IDs, and timestamps. Use structured logging format. |
+| 39 | **Add game invitation system** | P2 | Feature | Medium | Allow players to invite others to a game via a shareable link. Implement invitation expiration. Add email or URL-based invitation. |
+| 40 | **Implement game replay with move history** | P2 | Feature | Medium | Use the existing `MoveHistory` to implement a replay feature. Allow playback at different speeds. Add pause, resume, and skip controls. |
+
+### Tier 4 — Low (Nice to Have)
+
+| # | Task | Priority | Area | Effort | Description |
+|---|------|----------|------|--------|-------------|
+| 41 | **Add Kubernetes manifests** | P3 | DevOps | Large | Create K8s Deployment, Service, and Ingress manifests. Add Horizontal Pod Autoscaler. Configure resource limits and requests. Set up cert-manager for TLS. |
+| 42 | **Implement game leaderboard** | P3 | Feature | Medium | Track and display top players by score. Add per-game and all-time leaderboards. Implement ranking algorithms. |
+| 43 | **Add game chat** | P3 | Feature | Medium | Implement a simple chat between players in a game. Use SignalR for real-time messaging. Add message history. |
+| 44 | **Implement game rematch** | P3 | Feature | Small | Allow players to start a new game with the same players. Reuse the same player names and settings. Clear the board and start fresh. |
+| 45 | **Add game analytics dashboard** | P3 | Observability | Medium | Create a dashboard showing game activity, player engagement, and system health. Use Grafana or a custom dashboard. |
+| 46 | **Implement game difficulty levels** | P3 | Feature | Medium | Add AI opponents with different difficulty levels. Implement a simple AI that places tiles randomly, greedily, or optimally. |
+| 47 | **Add game tutorial** | P3 | Feature | Small | Add an interactive tutorial for new players. Explain game rules, tile placement, and scoring. Use tooltips or a step-by-step guide. |
+| 48 | **Implement game sound effects** | P3 | Frontend | Small | Add sound effects for tile placement, score updates, and game events. Use the Web Audio API. Allow players to mute sounds. |
+| 49 | **Add game export to image** | P3 | Feature | Medium | Allow exporting the current board state as an image (PNG, SVG). Use HTML Canvas or SVG rendering. Useful for sharing game states. |
+| 50 | **Implement game AI opponent** | P3 | Feature | Large | Implement an AI opponent that can play the game. Use a dictionary-based algorithm to find high-scoring words. Add difficulty levels (easy, medium, hard). |
+
+---
+
+## 17. Task Execution Roadmap
+
+### Sprint 1: Foundation (Weeks 1-2)
+
+| # | Task | Reason |
+|---|------|--------|
+| 1 | Implement persistent game storage | Core infrastructure requirement |
+| 2 | Implement authentication | Security baseline |
+| 3 | Implement authorization | Security baseline |
+| 4 | Sanitize all user input | XSS prevention |
+| 5 | Fix thread safety in game store | Data integrity |
+| 11 | Implement proper service lifetime management | Architecture foundation |
+| 8 | Implement global exception handling | Reliability |
+
+### Sprint 2: Real-Time & Performance (Weeks 3-4)
+
+| # | Task | Reason |
+|---|------|--------|
+| 6 | Implement real-time game updates | Competitive play requirement |
+| 7 | Add rate limiting | Security baseline |
+| 9 | Add HTTPS/TLS to API service | Security baseline |
+| 10 | Fix session fixation vulnerability | Security baseline |
+| 12 | Implement circuit breaker for API calls | Reliability |
+| 13 | Add structured logging | Observability |
+| 21 | Add integration tests for concurrent operations | Quality assurance |
+
+### Sprint 3: Quality & Polish (Weeks 5-6)
+
+| # | Task | Reason |
+|---|------|--------|
+| 14 | Implement Swagger only in development | Security hygiene |
+| 15 | Extract magic numbers to named constants | Code quality |
+| 16 | Implement player name validation | Input validation |
+| 17 | Add CORS policy | Security baseline |
+| 18 | Implement game eviction policy | Resource management |
+| 19 | Add input length limits on proxy | Security hygiene |
+| 20 | Implement proper error responses | API design |
+| 22 | Implement game state validation | Reliability |
+| 23 | Add health check for game store | Observability |
+| 24 | Fix Dockerfile layer caching | DevOps efficiency |
+| 25 | Implement nullable reference types consistently | Code quality |
+
+### Sprint 4: Features & UX (Weeks 7-8)
+
+| # | Task | Reason |
+|---|------|--------|
+| 26 | Implement mobile-responsive game board | User experience |
+| 27 | Add accessibility (ARIA) support | Accessibility |
+| 28 | Add dark/light theme toggle | User experience |
+| 29 | Add game export/import | User convenience |
+| 30 | Implement game replay | User engagement |
+| 31 | Add game search/filter | User convenience |
+| 32 | Implement proper configuration with IOptions | Architecture |
+| 33 | Add Prometheus metrics | Observability |
+| 34 | Implement OpenTelemetry tracing | Observability |
+| 35 | Add game statistics | User engagement |
+
+### Sprint 5: Advanced Features (Weeks 9-10)
+
+| # | Task | Reason |
+|---|------|--------|
+| 36 | Implement tile bag shuffle verification | Reliability |
+| 37 | Add game timeout | User experience |
+| 38 | Implement proper logging of game events | Observability |
+| 39 | Add game invitation system | User engagement |
+| 40 | Implement game replay with move history | User engagement |
+| 41 | Add Kubernetes manifests | Production deployment |
+| 42 | Implement game leaderboard | User engagement |
+| 43 | Add game chat | User engagement |
+| 44 | Implement game rematch | User engagement |
+| 45 | Add game analytics dashboard | Operations |
+
+### Sprint 6: Polish & Launch (Weeks 11-12)
+
+| # | Task | Reason |
+|---|------|--------|
+| 46 | Implement game difficulty levels | Feature completeness |
+| 47 | Add game tutorial | User onboarding |
+| 48 | Implement game sound effects | User experience |
+| 49 | Add game export to image | User convenience |
+| 50 | Implement game AI opponent | Feature completeness |
+
+---
+
+## 18. Conclusion
+
+The Wordfeud API solution demonstrates a solid foundation for a multiplayer word game application. The codebase is well-structured with clear separation between the API backend and web frontend. The testing strategy is comprehensive, and the Docker deployment is properly configured.
+
+However, several critical issues must be addressed before this solution can be considered production-ready:
+
+1. **Data Persistence** — The in-memory game store is the most critical gap. Without persistence, all game data is lost on restart, and the solution cannot scale beyond a single instance.
+
+2. **Authentication & Authorization** — The complete absence of authentication means any client can create, join, or manipulate games. This is unacceptable for a multiplayer game.
+
+3. **Real-Time Communication** — The polling-based update mechanism introduces latency and doesn't scale well. SignalR or WebSocket integration is needed for competitive play.
+
+4. **Security** — XSS vulnerabilities, missing CORS policy, and no rate limiting create significant security risks.
+
+5. **Thread Safety** — The concurrent access to the in-memory game store without synchronization can cause data corruption under load.
+
+The recommended prioritization is:
+
+| Priority | Timeline | Focus |
+|----------|----------|-------|
+| P0 | Immediate | Persistence, authentication, XSS fix |
+| P1 | Short-term | Thread safety, SignalR, rate limiting |
+| P2 | Medium-term | HTTPS, monitoring, configuration |
+| P3 | Long-term | Mobile, accessibility, K8s |
+
 With these improvements, the solution can evolve from a functional prototype to a production-ready multiplayer game platform.
 
 ---
