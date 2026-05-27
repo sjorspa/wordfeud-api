@@ -84,10 +84,10 @@ public class ProxyController : ControllerBase
 
             // Copy response body
             var bodyBytes = await response.Content.ReadAsByteArrayAsync();
-            HttpContext.Response.StatusCode = (int)response.StatusCode;
-            await HttpContext.Response.Body.WriteAsync(bodyBytes, HttpContext.RequestAborted);
 
-            return new EmptyResult();
+            // Set status code and return the body as a file content result
+            HttpContext.Response.StatusCode = (int)response.StatusCode;
+            return new FileContentResult(bodyBytes, response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream");
         }
         catch (Exception ex)
         {
