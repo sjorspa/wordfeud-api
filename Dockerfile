@@ -19,7 +19,7 @@ COPY Wordfeud.Api.IntegrationTests/ Wordfeud.Api.IntegrationTests/
 
 # Build
 WORKDIR /src/Wordfeud.Api
-RUN dotnet publish -c Release -o /app/publish --no-restore
+RUN dotnet publish -c Release -o /app/publish
 
 # ============================
 # Runtime stage
