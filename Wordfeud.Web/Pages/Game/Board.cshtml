@@ -123,8 +123,8 @@
 
                         <!-- Board -->
                         <div class="bg-board-dark p-1 sm:p-2 rounded-xl shadow-2xl" style="background: linear-gradient(145deg, #339966, #206955);">
-                            <div id="board-container" class="grid grid-cols-15 gap-3 border-2 border-board-border"
-                                 style="width: min(90vw, calc(15 * 2.5rem + 14 * 0.75rem)); height: min(90vw, calc(15 * 2.5rem + 14 * 0.75rem));">
+                            <div id="board-container" class="grid grid-cols-15 gap-1 border-2 border-board-border"
+                                 style="width: min(90vw, calc(15 * 3rem + 14 * 0.25rem)); height: min(90vw, calc(15 * 3rem + 14 * 0.25rem));">
                                 @for (var row = 0; row < 15; row++)
                                 {
                                     @for (var col = 0; col < 15; col++)
@@ -274,7 +274,7 @@
         <div id="swap-tile-list" class="space-y-2 mb-4 max-h-64 overflow-y-auto">
             <!-- Populated by JS -->
         </div>
-        <div class="flex gap-3">
+        <div class="flex gap-1">
             <button onclick="closeSwapModal()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300">Cancel</button>
             <button onclick="confirmSwap()" class="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-semibold">Swap</button>
         </div>
