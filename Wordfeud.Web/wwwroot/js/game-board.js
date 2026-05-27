@@ -306,14 +306,20 @@ function handleDrop(event, row, col) {
 
     // Render the tile visually on the board cell
     if (cell && tileData) {
-        const tileEl = document.createElement('div');
-        tileEl.className = 'placed-tile';
-        tileEl.innerHTML = `
-            ${tileData.isBlank ? '?' : tileData.letter}
-            <span class="points">${tileData.points}</span>
-            <button class="remove-btn" onclick="removePlacedTile(${row}, ${col})">&times;</button>
-        `;
-        cell.appendChild(tileEl);
+        // If blank tile, show picker modal instead of rendering immediately
+        if (tileData.isBlank) {
+            GameState.blankTileTargetId = tileId;
+            showBlankLetterPicker(tileId);
+        } else {
+            const tileEl = document.createElement('div');
+            tileEl.className = 'placed-tile';
+            tileEl.innerHTML = `
+                ${tileData.isBlank ? '?' : tileData.letter}
+                <span class="points">${tileData.points}</span>
+                <button class="remove-btn" onclick="removePlacedTile(${row}, ${col})">&times;</button>
+            `;
+            cell.appendChild(tileEl);
+        }
     }
 
     updatePlacedTilesPreview();
@@ -600,22 +606,24 @@ async function selectBlankLetter(letter) {
         return;
     }
 
-    // Update the placed tile
+    // Find the cell where this blank tile was dropped
     for (const [key, tileId] of GameState.placedTiles.entries()) {
         if (tileId === GameState.blankTileTargetId) {
             const [row, col] = key.split(',').map(Number);
-            GameState.placedTiles.set(key, { ...GameState.placedTiles.get(key), letter: letter });
-
             const cell = getBoardCell(row, col);
             if (cell) {
-                const tileEl = cell.querySelector('.placed-tile');
-                if (tileEl) {
-                    tileEl.innerHTML = `
-                        ${letter}
-                        <span class="points">0</span>
-                        <button class="remove-btn" onclick="removePlacedTile(${row}, ${col})">&times;</button>
-                    `;
-                }
+                // Remove the old placeholder tile and render with selected letter
+                const oldTile = cell.querySelector('.placed-tile');
+                if (oldTile) oldTile.remove();
+
+                const tileEl = document.createElement('div');
+                tileEl.className = 'placed-tile';
+                tileEl.innerHTML = `
+                    ${letter}
+                    <span class="points">0</span>
+                    <button class="remove-btn" onclick="removePlacedTile(${row}, ${col})">&times;</button>
+                `;
+                cell.appendChild(tileEl);
             }
             break;
         }
