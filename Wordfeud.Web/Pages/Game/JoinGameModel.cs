@@ -50,7 +50,7 @@ public class JoinGameModel : PageModel
             if (response.IsSuccessStatusCode)
             {
                 // Get the game data from the response and store player ID in session
-                var gameData = await response.Content.ReadFromJsonAsync<GameDataViewModel>(System.Text.Json.JsonSerializerOptions.Default);
+                var gameData = await response.Content.ReadFromJsonAsync<GameDataViewModel>(ApiJsonOptions.Default);
                 if (gameData?.Players != null && gameData.Players.Count > 0)
                 {
                     // Find the player that just joined (by name match)
