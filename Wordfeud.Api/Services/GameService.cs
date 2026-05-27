@@ -561,7 +561,7 @@ public class GameService : IGameService
         }
 
         // Check for gaps in placement
-        if (HasGaps(request.Tiles, direction))
+        if (HasGaps(game, request.Tiles, direction))
         {
             return (false, "Placed tiles must be contiguous (no gaps).");
         }
@@ -657,7 +657,7 @@ public class GameService : IGameService
     /// <summary>
     /// Checks if placed tiles have gaps between them.
     /// </summary>
-    private static bool HasGaps(List<TilePlacementDto> tiles, int direction)
+    private bool HasGaps(Game game, List<TilePlacementDto> tiles, int direction)
     {
         if (tiles.Count <= 1)
             return false;
@@ -671,12 +671,25 @@ public class GameService : IGameService
             if (direction == 0)
             {
                 if (sorted[i].Column != sorted[i - 1].Column + 1)
-                    return true;
+                {
+                    // Gap exists — check if intermediate positions are filled by existing tiles
+                    for (var col = sorted[i - 1].Column + 1; col < sorted[i].Column; col++)
+                    {
+                        if (game.Board[sorted[i - 1].Row, col] == null)
+                            return true;
+                    }
+                }
             }
             else
             {
                 if (sorted[i].Row != sorted[i - 1].Row + 1)
-                    return true;
+                {
+                    for (var row = sorted[i - 1].Row + 1; row < sorted[i].Row; row++)
+                    {
+                        if (game.Board[row, sorted[i - 1].Column] == null)
+                            return true;
+                    }
+                }
             }
         }
 
