@@ -15,7 +15,8 @@ const GameState = {
     blankTileTargetId: null,
     swapSelectedTiles: new Set(),
     refreshInterval: null,
-    lastGameState: null
+    lastGameState: null,
+    lastMoveTiles: new Set() // Set of "row,col" strings for highlighting
 };
 
 // ============================================
@@ -68,6 +69,7 @@ async function loadGameState() {
         updateScorePanel(data.players);
         updateGameInfo(data);
         updateMoveHistory(data.moves || []);
+        extractLastMoveTiles(data.moves || []);
         updateBoard(data.board || []);
         updateTileRack(data.players.find(p => p.id === GameState.currentPlayerId)?.hand || []);
         updateTurnIndicator(data.currentPlayerId);
@@ -185,6 +187,20 @@ function updateMoveHistory(moves) {
     historyContainer.scrollTop = historyContainer.scrollHeight;
 }
 
+function extractLastMoveTiles(moves) {
+    GameState.lastMoveTiles = new Set();
+    if (!moves || moves.length === 0) return;
+
+    // Find the last place move (highest move number with tiles)
+    const placeMoves = moves.filter(m => m.actionType === 'place' && m.tiles && m.tiles.length > 0);
+    if (placeMoves.length === 0) return;
+
+    const lastMove = placeMoves[placeMoves.length - 1];
+    for (const tile of lastMove.tiles) {
+        GameState.lastMoveTiles.add(`${tile.row},${tile.column}`);
+    }
+}
+
 function updateTurnIndicator(currentPlayerId) {
     const indicator = document.querySelector('.mb-4 .rounded-full');
     if (!indicator) return;
@@ -228,7 +244,8 @@ function updateBoard(board) {
                 const cell = getBoardCell(row, col);
                 if (cell) {
                     const tileEl = document.createElement('div');
-                    tileEl.className = 'placed-tile';
+                    const isLastMove = GameState.lastMoveTiles.has(`${row},${col}`);
+                    tileEl.className = `placed-tile${isLastMove ? ' last-move' : ''}`;
                     tileEl.innerHTML = `
                         ${tile.isBlank ? '?' : tile.letter}
                         <span class="points">${tile.points}</span>
