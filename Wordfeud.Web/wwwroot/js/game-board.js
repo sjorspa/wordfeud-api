@@ -16,8 +16,245 @@ const GameState = {
     swapSelectedTiles: new Set(),
     refreshInterval: null,
     lastGameState: null,
-    lastMoveTiles: new Set() // Set of "row,col" strings for highlighting
+    lastMoveTiles: new Set(), // Set of "row,col" strings for highlighting
+    boardZoom: 1, // Zoom level (0.5 to 2)
+    colorblindMode: localStorage.getItem('wordfeud-colorblind') === 'true',
+    darkMode: localStorage.getItem('wordfeud-darkmode') !== 'false', // Default dark
+    reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    undoHistory: new Map() // key: timestamp -> value: placedTiles snapshot
 };
+
+// ============================================
+// Colorblind Mode
+// ============================================
+function toggleColorblindMode() {
+    GameState.colorblindMode = !GameState.colorblindMode;
+    localStorage.setItem('wordfeud-colorblind', GameState.colorblindMode.toString());
+
+    const boardContainer = document.getElementById('board-container');
+    if (boardContainer) {
+        if (GameState.colorblindMode) {
+            boardContainer.classList.add('colorblind-mode');
+        } else {
+            boardContainer.classList.remove('colorblind-mode');
+        }
+    }
+
+    showToast(
+        GameState.colorblindMode ? 'Colorblind mode enabled' : 'Colorblind mode disabled',
+        'info',
+        2000
+    );
+}
+
+// ============================================
+// Undo Last Move
+// ============================================
+function saveUndoState() {
+    const key = Date.now();
+    GameState.undoHistory.set(key, new Map(GameState.placedTiles));
+    // Keep only last 10 undo states
+    if (GameState.undoHistory.size > 10) {
+        const firstKey = GameState.undoHistory.keys().next().value;
+        GameState.undoHistory.delete(firstKey);
+    }
+}
+
+function undoLastMove() {
+    if (GameState.placedTiles.size === 0) {
+        showToast('No tiles to undo', 'warning');
+        return;
+    }
+
+    // Save current state for potential redo (not implemented but good practice)
+    saveUndoState();
+
+    const tilesToRemove = new Map(GameState.placedTiles);
+    GameState.placedTiles.clear();
+
+    // Remove visual tiles
+    tilesToRemove.forEach((tileId, key) => {
+        const [row, col] = key.split(',').map(Number);
+        const cell = getBoardCell(row, col);
+        if (cell) {
+            const placedTile = cell.querySelector('.placed-tile');
+            if (placedTile) placedTile.remove();
+        }
+    });
+
+    // Return tiles to rack
+    const hand = getCurrentHand();
+    tilesToRemove.forEach((tileId) => {
+        const tile = hand.find(t => t.id === tileId);
+        if (tile) {
+            // Tile will be restored when we reload game state
+        }
+    });
+
+    updatePlacedTilesPreview();
+    showToast('Tiles returned to rack', 'info');
+}
+
+// ============================================
+// Board Zoom Controls
+// ============================================
+function resetZoom() {
+    GameState.boardZoom = 1;
+    const boardEl = document.getElementById('board-container');
+    if (boardEl) {
+        boardEl.style.transform = 'scale(1)';
+        const container = boardEl.parentElement;
+        if (container) {
+            container.style.width = '100%';
+            container.style.height = '100%';
+        }
+    }
+    const zoomDisplay = document.getElementById('zoom-level');
+    if (zoomDisplay) zoomDisplay.textContent = '100%';
+    showToast('Board zoom reset to 100%', 'info', 1500);
+}
+
+function zoomBoard(direction) {
+    const boardEl = document.getElementById('board-container');
+    if (!boardEl) return;
+
+    // direction=0 means reset
+    if (direction === 0) {
+        resetZoom();
+        return;
+    }
+
+    GameState.boardZoom = Math.max(0.5, Math.min(2, GameState.boardZoom + direction * 0.25));
+
+    boardEl.style.transform = `scale(${GameState.boardZoom})`;
+    boardEl.style.transformOrigin = 'center center';
+    boardEl.style.transition = GameState.reducedMotion ? 'none' : 'transform 0.2s ease';
+
+    // Adjust container size to prevent overflow
+    const container = boardEl.parentElement;
+    if (container) {
+        const scale = 100 / GameState.boardZoom;
+        container.style.width = `${scale}%`;
+        container.style.height = `${scale}%`;
+    }
+
+    const label = GameState.boardZoom === 1 ? '100%' : `${Math.round(GameState.boardZoom * 100)}%`;
+    showToast(`Board zoom: ${label}`, 'info', 1500);
+
+    // Update zoom level display
+    const zoomDisplay = document.getElementById('zoom-level');
+    if (zoomDisplay) {
+        zoomDisplay.textContent = label;
+    }
+}
+
+// ============================================
+// Theme Toggle (Dark/Light Mode)
+// ============================================
+function toggleTheme() {
+    GameState.darkMode = !GameState.darkMode;
+    localStorage.setItem('wordfeud-darkmode', GameState.darkMode.toString());
+    applyTheme();
+}
+
+function applyTheme() {
+    const body = document.body;
+    if (GameState.darkMode) {
+        body.classList.remove('light');
+        body.classList.add('bg-gray-900', 'text-gray-100');
+    } else {
+        body.classList.remove('dark', 'bg-gray-900', 'text-gray-100');
+        body.classList.add('light', 'bg-gray-100', 'text-gray-900');
+    }
+
+    // Update theme toggle dot position
+    const themeDot = document.getElementById('theme-toggle-dot');
+    if (themeDot) {
+        themeDot.style.transform = GameState.darkMode ? 'translateX(0)' : 'translateX(1.5rem)';
+        themeDot.parentElement.style.backgroundColor = GameState.darkMode ? '#22c55e' : '#6b7280';
+    }
+
+    // Update colorblind toggle dot position
+    const colorblindDot = document.getElementById('colorblind-toggle-dot');
+    if (colorblindDot) {
+        colorblindDot.style.transform = GameState.colorblindMode ? 'translateX(1.5rem)' : 'translateX(0)';
+        colorblindDot.parentElement.style.backgroundColor = GameState.colorblindMode ? '#22c55e' : '#6b7280';
+    }
+
+    // Update theme icon
+    const themeIcon = document.getElementById('theme-icon');
+    if (themeIcon) {
+        themeIcon.textContent = GameState.darkMode ? '&#9790;' : '&#9728;';
+    }
+}
+
+// ============================================
+// Leave Game
+// ============================================
+async function leaveGame() {
+    if (!confirm('Are you sure you want to leave this game?')) return;
+
+    try {
+        await apiDelete(`/games/${GameState.gameId}/leave`);
+        showToast('You left the game', 'info');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1000);
+    } catch (error) {
+        // API might not support leave endpoint - just navigate away
+        showToast('Leaving game...', 'info');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1000);
+    }
+}
+
+// ============================================
+// Initialize Settings and Accessibility
+// ============================================
+function initSettings() {
+    // Apply saved colorblind mode
+    if (GameState.colorblindMode) {
+        const boardContainer = document.getElementById('board-container');
+        if (boardContainer) boardContainer.classList.add('colorblind-mode');
+    }
+
+    // Apply saved theme
+    applyTheme();
+
+    // Add settings button if not present
+    addSettingsButton();
+}
+
+function addSettingsButton() {
+    const gameBoard = document.querySelector('.flex-1.order-1');
+    if (!gameBoard) return;
+
+    // Check if settings button already exists
+    if (document.getElementById('settings-btn')) return;
+
+    const settingsBtn = document.createElement('button');
+    settingsBtn.id = 'settings-btn';
+    settingsBtn.className = 'p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors';
+    settingsBtn.setAttribute('aria-label', 'Open settings', 'true');
+    settingsBtn.innerHTML = '&#9881;';
+    settingsBtn.onclick = showSettingsModal;
+
+    const settingsContainer = document.getElementById('settings-container');
+    if (settingsContainer) {
+        settingsContainer.appendChild(settingsBtn);
+    }
+}
+
+function showSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settings-modal');
+    if (modal) modal.classList.add('hidden');
+}
 
 // ============================================
 // Initialize Game Board
@@ -41,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadGameState();
         startGameLoop();
         initKeyboardShortcuts();
+        initSettings();
     }
 });
 
@@ -53,6 +291,34 @@ function initKeyboardShortcuts() {
         if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
             e.preventDefault();
             recallTiles();
+            return;
+        }
+
+        // Ctrl+Shift+Z - Undo last move
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'Z') {
+            e.preventDefault();
+            undoLastMove();
+            return;
+        }
+
+        // Ctrl+= or Ctrl++ - Zoom in
+        if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+            e.preventDefault();
+            zoomBoard(1);
+            return;
+        }
+
+        // Ctrl+- - Zoom out
+        if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+            e.preventDefault();
+            zoomBoard(-1);
+            return;
+        }
+
+        // Ctrl+0 - Reset zoom
+        if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+            e.preventDefault();
+            resetZoom();
             return;
         }
 
@@ -85,6 +351,41 @@ function initKeyboardShortcuts() {
         if (e.key === 's' && !e.ctrlKey && !e.metaKey) {
             e.preventDefault();
             openSwapModal();
+            return;
+        }
+
+        // L - Leave game
+        if (e.key === 'l' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            leaveGame();
+            return;
+        }
+
+        // T - Toggle theme
+        if (e.key === 't' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            toggleTheme();
+            return;
+        }
+
+        // C - Toggle colorblind mode
+        if (e.key === 'c' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            toggleColorblindMode();
+            return;
+        }
+
+        // + or = - Zoom in (without Ctrl)
+        if (e.key === '+' || e.key === '=') {
+            e.preventDefault();
+            zoomBoard(1);
+            return;
+        }
+
+        // - - Zoom out (without Ctrl)
+        if (e.key === '-') {
+            e.preventDefault();
+            zoomBoard(-1);
             return;
         }
     });

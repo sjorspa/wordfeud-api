@@ -179,23 +179,46 @@
                 </div>
 
                 <!-- Placed Tiles Preview -->
-                <div id="placed-tiles-preview" class="mt-4 min-h-[3.5rem] flex items-center gap-2 p-3 bg-gray-800 rounded-xl w-full max-w-lg">
+                <div id="placed-tiles-preview" class="mt-4 min-h-[3.5rem] flex items-center gap-2 p-3 bg-gray-800 rounded-xl w-full max-w-lg" role="status" aria-live="polite">
                     <span class="text-gray-500 text-sm">Drag tiles from your rack onto the board</span>
                 </div>
 
+                <!-- Board Zoom Controls -->
+                <div class="flex items-center gap-2 mt-3 justify-center" aria-label="Board zoom controls">
+                    <button onclick="zoomBoard(-1)" class="p-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm" aria-label="Zoom out board">
+                        &#8722;
+                    </button>
+                    <span class="text-xs text-gray-400 min-w-[3rem] text-center" id="zoom-level">100%</span>
+                    <button onclick="zoomBoard(1)" class="p-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm" aria-label="Zoom in board">
+                        &#43;
+                    </button>
+                    <button onclick="zoomBoard(0)" class="p-1.5 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-xs ml-1" id="reset-zoom-btn" aria-label="Reset zoom" style="min-width: 2rem;">
+                        R
+                    </button>
+                </div>
+
+                <!-- Settings Button Container -->
+                <div id="settings-container" class="flex items-center gap-2 mt-2 justify-center"></div>
+
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-2 mt-4 w-full max-w-lg justify-center">
-                    <button onclick="placeWord()" id="place-btn" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm">
+                    <button onclick="placeWord()" id="place-btn" class="px-5 py-2.5 bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all text-sm" aria-label="Place word on board">
                         &#10003; Place Word
                     </button>
-                    <button onclick="recallTiles()" class="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-xl transition-all text-sm">
-                        &#8634; Recall Tiles
+                    <button onclick="recallTiles()" class="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-500 text-white font-semibold rounded-xl transition-all text-sm" aria-label="Recall all tiles to rack">
+                        &#8634; Recall
                     </button>
-                    <button onclick="passTurn()" class="px-5 py-2.5 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-xl transition-all text-sm">
-                        &#9203; Pass Turn
+                    <button onclick="undoLastMove()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all text-sm" aria-label="Undo last move" id="undo-btn" style="display:none;">
+                        &#8630; Undo
                     </button>
-                    <button onclick="showSwapModal()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-all text-sm">
-                        &#8645; Swap Tiles
+                    <button onclick="passTurn()" class="px-5 py-2.5 bg-gray-600 hover:bg-gray-500 text-white font-semibold rounded-xl transition-all text-sm" aria-label="Pass turn to opponent">
+                        &#9203; Pass
+                    </button>
+                    <button onclick="showSwapModal()" class="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-all text-sm" aria-label="Swap tiles with bag">
+                        &#8645; Swap
+                    </button>
+                    <button onclick="leaveGame()" class="px-5 py-2.5 bg-red-700 hover:bg-red-600 text-white font-semibold rounded-xl transition-all text-sm" aria-label="Leave this game">
+                        &#128683; Leave
                     </button>
                 </div>
 
@@ -247,6 +270,54 @@
             <button onclick="closeSwapModal()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300">Cancel</button>
             <button onclick="confirmSwap()" class="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded-xl text-white font-semibold">Swap</button>
         </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center">
+    <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-xl font-bold text-tile-gold mb-4">Settings</h3>
+        <div class="space-y-4 mb-6">
+            <!-- Dark/Light Mode Toggle -->
+            <div class="flex items-center justify-between p-3 bg-gray-900 rounded-lg">
+                <div>
+                    <p class="font-semibold text-white">Dark Mode</p>
+                    <p class="text-xs text-gray-400">Toggle dark/light theme</p>
+                </div>
+                <button onclick="toggleTheme()" class="w-12 h-6 rounded-full bg-gray-600 relative transition-colors" id="theme-toggle" aria-label="Toggle dark mode">
+                    <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="theme-toggle-dot"></div>
+                </button>
+            </div>
+
+            <!-- Colorblind Mode Toggle -->
+            <div class="flex items-center justify-between p-3 bg-gray-900 rounded-lg">
+                <div>
+                    <p class="font-semibold text-white">Colorblind Mode</p>
+                    <p class="text-xs text-gray-400">Enhanced bonus square patterns</p>
+                </div>
+                <button onclick="toggleColorblindMode()" class="w-12 h-6 rounded-full bg-gray-600 relative transition-colors" id="colorblind-toggle" aria-label="Toggle colorblind mode">
+                    <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform" id="colorblind-toggle-dot"></div>
+                </button>
+            </div>
+
+            <!-- Keyboard Shortcuts Help -->
+            <div class="p-3 bg-gray-900 rounded-lg">
+                <p class="font-semibold text-white mb-2">Keyboard Shortcuts</p>
+                <div class="text-xs text-gray-400 space-y-1">
+                    <div class="flex justify-between"><span>Place Word</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">Space</kbd></div>
+                    <div class="flex justify-between"><span>Recall Tiles</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">Ctrl+Z</kbd></div>
+                    <div class="flex justify-between"><span>Undo Move</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">Ctrl+Shift+Z</kbd></div>
+                    <div class="flex justify-between"><span>Zoom In/Out</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">Ctrl+=/-</kbd></div>
+                    <div class="flex justify-between"><span>Pass Turn</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">P</kbd></div>
+                    <div class="flex justify-between"><span>Swap Tiles</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">S</kbd></div>
+                    <div class="flex justify-between"><span>Toggle Theme</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">T</kbd></div>
+                    <div class="flex justify-between"><span>Colorblind Mode</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">C</kbd></div>
+                    <div class="flex justify-between"><span>Leave Game</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">L</kbd></div>
+                    <div class="flex justify-between"><span>Escape/Cancel</span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded">Esc</kbd></div>
+                </div>
+            </div>
+        </div>
+        <button onclick="closeSettingsModal()" class="w-full py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-gray-300">Close</button>
     </div>
 </div>
 
