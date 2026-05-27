@@ -19,6 +19,7 @@
         <p class="text-center text-gray-400 mb-8">Enter the game ID and your name</p>
 
         <form method="post" class="space-y-6">
+            @Html.AntiForgeryToken()
             <div>
                 <label asp-for="GameId" class="block text-sm font-medium text-gray-300 mb-2">Game ID</label>
                 <input asp-for="GameId" type="text"

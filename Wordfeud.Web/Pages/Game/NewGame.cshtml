@@ -51,6 +51,7 @@
         {
             <!-- Form -->
             <form method="post" class="space-y-6">
+                @Html.AntiForgeryToken()
                 <div>
                     <label asp-for="PlayerName" class="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
                     <input asp-for="PlayerName" type="text" maxlength="50"
