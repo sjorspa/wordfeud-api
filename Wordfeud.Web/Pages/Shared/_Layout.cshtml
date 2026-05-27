@@ -84,11 +84,10 @@
             background: linear-gradient(145deg, #e0e0e0, #ccc);
         }
 
-        /* Placed tile - fits within board cell */
+        /* Placed tile - fixed size */
         .placed-tile {
-            width: 90%;
-            height: 90%;
-            aspect-ratio: 1;
+            width: 2.5rem;
+            height: 2.5rem;
             background: linear-gradient(145deg, #f5e6c4, #e8d5a3);
             border: 1.5px solid #c9a86c;
             border-radius: 0.35rem;
@@ -216,8 +215,11 @@
         }
         @@keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Responsive board */
-        .board-cell-size { width: 100%; padding-top: 100%; }
+        /* Responsive board - tiles drive the size */
+        .board-cell-size {
+            width: 2.5rem;
+            height: 2.5rem;
+        }
 
         /* Light mode styles */
         body.light {
