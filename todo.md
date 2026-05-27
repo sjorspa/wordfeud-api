@@ -42,8 +42,8 @@
 - [ ] **Board zoom controls** - No zoom in/out for the board
 - [ ] **Tile highlight on hover** - Subtle hover effect on rack tiles
 - [x] **Suggested moves** - Not needed (out of scope)
-- [ ] **Board coordinate labels** - No row/column labels visible
-- [ ] **Last move highlight** - Don't highlight which tiles were just placed
+- [x] **Board coordinate labels** - A-O columns and 1-15 rows shown
+- [x] **Last move highlight** - Tiles from last move highlighted with golden pulse
 - [ ] **Loading skeleton screens** - Currently shows spinner, could use skeleton
 
 ### Multiplayer / Networking
