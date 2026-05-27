@@ -44,7 +44,9 @@ public class ProxyController : Controller
             }
         }
 
-        if (HttpContext.Request.HasFormContentType || HttpContext.Request.ContentLength > 0)
+        if (HttpContext.Request.HasFormContentType || 
+            HttpContext.Request.ContentLength > 0 || 
+            !string.IsNullOrEmpty(HttpContext.Request.ContentType))
         {
             var bodyBytes = await ReadBodyAsync();
             if (bodyBytes != null && bodyBytes.Length > 0)
@@ -88,11 +90,6 @@ public class ProxyController : Controller
 
     private async Task<byte[]?> ReadBodyAsync()
     {
-        if (!HttpContext.Request.HasFormContentType || HttpContext.Request.ContentLength == null)
-        {
-            return null;
-        }
-
         HttpContext.Request.EnableBuffering();
         using var reader = new System.IO.StreamReader(HttpContext.Request.Body, leaveOpen: true);
         var body = await reader.ReadToEndAsync();
