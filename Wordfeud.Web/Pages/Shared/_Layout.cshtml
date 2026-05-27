@@ -79,8 +79,8 @@
 
         /* Placed tile - matches rack tile style */
         .placed-tile {
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 2rem;
+            height: 2rem;
             background: linear-gradient(145deg, #f5e6c4, #e8d5a3);
             border: 1.5px solid #c9a86c;
             border-radius: 0.5rem;
@@ -104,6 +104,38 @@
         @keyframes lastMovePulse {
             0%, 100% { box-shadow: 0 0 8px rgba(240, 192, 64, 0.4), 0 2px 4px rgba(0,0,0,0.2); }
             50% { box-shadow: 0 0 14px rgba(240, 192, 64, 0.7), 0 2px 6px rgba(0,0,0,0.3); }
+        }
+
+        /* Scoring preview tooltip */
+        .scoring-preview {
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            border: 1px solid #f0c040;
+            border-radius: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.65rem;
+            color: #f0c040;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        .scoring-preview.visible {
+            opacity: 1;
+        }
+        .scoring-preview::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #f0c040;
         }
         .placed-tile .remove-btn {
             position: absolute;
