@@ -115,7 +115,7 @@
         }
         .placed-tile:hover .remove-btn { opacity: 1; }
 
-        @keyframes tileFadeIn {
+        @@keyframes tileFadeIn {
             from { opacity: 0; transform: scale(0.8); }
             to { opacity: 1; transform: scale(1); }
         }
@@ -128,11 +128,11 @@
         /* Toast animation */
         .toast-enter { animation: toastIn 0.3s ease forwards; }
         .toast-exit { animation: toastOut 0.3s ease forwards; }
-        @keyframes toastIn {
+        @@keyframes toastIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes toastOut {
+        @@keyframes toastOut {
             from { opacity: 1; transform: translateY(0); }
             to { opacity: 0; transform: translateY(-20px); }
         }
@@ -152,7 +152,7 @@
             height: 24px;
             animation: spin 0.8s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @@keyframes spin { to { transform: rotate(360deg); } }
 
         /* Responsive board */
         .board-cell-size { width: 100%; padding-top: 100%; }
