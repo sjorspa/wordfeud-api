@@ -74,7 +74,7 @@ public class ProxyController : ControllerBase
             {
                 if (!header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
                 {
-                    HttpContext.Response.Headers.Append(header.Key, header.Value.AsEnumerable());
+                    HttpContext.Response.Headers.Append(header.Key, new Microsoft.Extensions.Primitives.StringValues(header.Value.ToArray()));
                 }
             }
             if (response.Content.Headers.ContentType != null)
