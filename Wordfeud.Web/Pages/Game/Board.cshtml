@@ -122,7 +122,7 @@
                         </div>
 
                         <!-- Board -->
-                        <div class="bg-board-dark p-1 sm:p-2 rounded-xl shadow-2xl">
+                        <div class="bg-board-dark p-1 sm:p-2 rounded-xl shadow-2xl" style="background: linear-gradient(145deg, #339966, #206955);">
                             <div id="board-container" class="grid grid-cols-15 gap-3 border-2 border-board-border"
                                  style="width: min(90vw, calc(15 * 2.5rem + 14 * 0.75rem)); height: min(90vw, calc(15 * 2.5rem + 14 * 0.75rem));">
                                 @for (var row = 0; row < 15; row++)
@@ -159,7 +159,7 @@
                                         }
 
                                         <div class="@(cellClass) @(bonusClass) board-cell"
-                                             style="background: @(string.IsNullOrEmpty(bonus) ? "#1a6b3c" : "inherit");"
+                                             style="background: @(string.IsNullOrEmpty(bonus) ? "#339966" : "inherit");"
                                              data-row="@row" data-col="@col"
                                              ondragover="event.preventDefault(); this.classList.add('drop-hover')"
                                              ondragleave="this.classList.remove('drop-hover')"
@@ -223,7 +223,7 @@
                 </div>
 
                 <!-- Tile Rack (populated by JavaScript) -->
-                <div class="mt-6 bg-wood-dark p-3 sm:p-4 rounded-2xl shadow-xl">
+                <div class="mt-6" style="background: linear-gradient(145deg, #c9a86c, #8b6914); padding: 0.75rem 1rem; border-radius: 1rem; box-shadow: 0 3px 10px rgba(0,0,0,0.3);">
                     <div id="tile-rack" class="flex gap-1 sm:gap-2 justify-center">
                         <div class="tile" data-tile-id="loading" data-points="0">
                             <span class="animate-pulse">...</span>

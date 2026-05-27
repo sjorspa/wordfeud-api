@@ -5,18 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Wordfeud</title>
     <link rel="icon" href="~/favicon.ico" />
+    <link href='https://fonts.googleapis.com/css?family=Asap' rel='stylesheet' type='text/css'>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        board: '#1a6b3c',
-                        'board-dark': '#0f4d2a',
-                        'board-light': '#2d8a54',
-                        'board-border': '#0a3d20',
-                        'tile-cream': '#f5e6c4',
-                        'tile-dark': '#e8d5a3',
+                        board: '#339966',
+                        'board-dark': '#206955',
+                        'board-light': '#44aa77',
+                        'board-border': '#1a5c3a',
+                        'tile-cream': '#fae1a6',
+                        'tile-dark': '#d8bd72',
                         'tile-gold': '#f0c040',
                         'wood': '#c9a86c',
                         'wood-dark': '#8b6914',
@@ -30,33 +31,45 @@
     </script>
     <style>
         /* Board bonus square colors */
-        .bonus-tws { background-color: #e94560; color: white; }
-        .bonus-dws { background-color: #f09060; color: white; }
-        .bonus-dls { background-color: #90c0f0; color: #1a1a2e; }
-        .bonus-tls { background-color: #6090e0; color: white; }
-        .bonus-star { background-color: #e94560; color: white; }
+        .bonus-tws { background-color: #d72421; color: #f8bdb4; }
+        .bonus-dws { background-color: #b86e74; color: white; }
+        .bonus-dls { background-color: #5d94c5; color: white; }
+        .bonus-tls { background-color: #4695ca; color: #c3f5f7; }
+        .bonus-star { background-color: #d72421; color: #f8bdb4; }
 
         /* Colorblind mode bonus square colors - uses patterns in addition to colors */
-        .colorblind-mode .bonus-tws { background-color: #d62728; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-dws { background-color: #ff7f0e; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-dls { background-color: #2ca02c; color: white; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-tls { background-color: #1f77b4; color: white; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-star { background-color: #d62728; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-tws { background-color: #d72421; color: #f8bdb4; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-dws { background-color: #b86e74; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-dls { background-color: #5d94c5; color: white; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-tls { background-color: #4695ca; color: #c3f5f7; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-star { background-color: #d72421; color: #f8bdb4; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
 
         /* Tile styles */
         .tile {
             width: 2.5rem;
             height: 2.5rem;
-            background: linear-gradient(145deg, #f5e6c4, #e8d5a3);
-            border: 1.5px solid #c9a86c;
+            background: linear-gradient(145deg, #d8bd72, #fae1a6);
+            border: 1.5px solid #f8e6b1;
+            border-top-width: 1px;
+            border-right-width: 4px;
+            border-bottom-width: 4px;
+            border-left-width: 1px;
+            border-top-color: #f8e6b1;
+            border-right-color: #f8e6b1;
+            border-bottom-color: #cab06b;
+            border-left-color: #f8e6b1;
             border-radius: 0.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: #333;
+            font-family: 'Asap', serif;
+            color: #272832;
+            text-shadow: 1px 1px 0px #fff5d7;
             cursor: grab;
             user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: -moz-none;
             position: relative;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -68,7 +81,7 @@
         .tile:active { cursor: grabbing; }
         .tile.selected {
             background: linear-gradient(145deg, #f0c040, #e0b030);
-            border-color: #e94560;
+            border-color: #d72421;
             transform: translateY(-4px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.3);
         }
@@ -77,25 +90,36 @@
             bottom: 1px;
             right: 3px;
             font-size: 0.55rem;
-            color: #666;
+            color: #272832;
+            text-shadow: 1px 1px 0px #fff5d7;
             line-height: 1;
         }
         .tile.blank-tile {
-            background: linear-gradient(145deg, #e0e0e0, #ccc);
+            background: linear-gradient(145deg, #d8bd72, #fae1a6);
         }
 
         /* Placed tile - fixed size */
         .placed-tile {
             width: 2.5rem;
             height: 2.5rem;
-            background: linear-gradient(145deg, #f5e6c4, #e8d5a3);
-            border: 1.5px solid #c9a86c;
+            background: linear-gradient(145deg, #d8bd72, #fae1a6);
+            border: 1.5px solid #f8e6b1;
+            border-top-width: 1px;
+            border-right-width: 4px;
+            border-bottom-width: 4px;
+            border-left-width: 1px;
+            border-top-color: #f8e6b1;
+            border-right-color: #f8e6b1;
+            border-bottom-color: #cab06b;
+            border-left-color: #f8e6b1;
             border-radius: 0.35rem;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            color: #333;
+            font-family: 'Asap', serif;
+            color: #272832;
+            text-shadow: 1px 1px 0px #fff5d7;
             cursor: pointer;
             position: relative;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -106,7 +130,8 @@
             position: absolute;
             bottom: 1px;
             right: 2px;
-            color: #666;
+            color: #272832;
+            text-shadow: 1px 1px 0px #fff5d7;
             line-height: 1;
         }
         .placed-tile span {
