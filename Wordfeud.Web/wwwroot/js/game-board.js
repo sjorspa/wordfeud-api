@@ -40,8 +40,55 @@ document.addEventListener('DOMContentLoaded', () => {
         setStoredGameId(GameState.gameId);
         loadGameState();
         startGameLoop();
+        initKeyboardShortcuts();
     }
 });
+
+// ============================================
+// Keyboard Shortcuts
+// ============================================
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // Ctrl+Z - Recall tiles
+        if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+            e.preventDefault();
+            recallTiles();
+            return;
+        }
+
+        // Space or Enter - Place word
+        if ((e.key === ' ' || e.key === 'Enter') && GameState.placedTiles.size > 0) {
+            e.preventDefault();
+            placeWord();
+            return;
+        }
+
+        // Escape - Clear placed tiles
+        if (e.key === 'Escape') {
+            if (GameState.placedTiles.size > 0) {
+                recallTiles();
+            }
+            // Close any open modals
+            const modals = document.querySelectorAll('.modal:not(.hidden)');
+            modals.forEach(m => m.classList.add('hidden'));
+            return;
+        }
+
+        // P - Pass turn
+        if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            passTurn();
+            return;
+        }
+
+        // S - Open swap modal
+        if (e.key === 's' && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            openSwapModal();
+            return;
+        }
+    });
+}
 
 // ============================================
 // Load Game State from API
