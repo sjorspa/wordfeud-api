@@ -70,7 +70,7 @@ public class DutchDictionaryService : IDutchDictionaryService
             return _fallbackWords.Contains(word);
         }
 
-        var normalizedWord = NormalizeDiacritics(word);
+        var normalizedWord = NormalizeDiacritics(word).ToUpperInvariant();
         return _words.Contains(normalizedWord);
     }
 
@@ -117,7 +117,7 @@ public class DutchDictionaryService : IDutchDictionaryService
         {
             foreach (var word in embeddedWords)
             {
-                _words.Add(NormalizeDiacritics(word));
+                _words.Add(NormalizeDiacritics(word).ToUpperInvariant());
             }
             _isInitialized = true;
             _logger.LogInformation("Loaded {Count} words from embedded resource", _words.Count);
