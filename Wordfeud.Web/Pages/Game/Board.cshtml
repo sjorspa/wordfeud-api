@@ -81,8 +81,16 @@
                             {
                                 <div class="text-xs p-2 bg-gray-900 rounded">
                                     <span class="font-semibold text-tile-gold">@move.PlayerName</span>
-                                    <span class="text-gray-400 ml-1">placed "@move.Word"</span>
-                                    <span class="text-green-400 ml-1">+@(move.Points) pts</span>
+                                    @if (!string.IsNullOrEmpty(move.Word))
+                                    {
+                                        <span class="text-gray-400 ml-1">placed "@move.Word"</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-gray-400 ml-1">(@move.ActionType)</span>
+                                    }
+                                    <span class="text-green-400 ml-1">+@move.Score pts</span>
+                                    <span class="text-gray-500 ml-1">#@move.MoveNumber</span>
                                 </div>
                             }
                         }

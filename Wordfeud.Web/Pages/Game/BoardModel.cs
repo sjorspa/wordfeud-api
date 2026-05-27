@@ -161,28 +161,49 @@ public class TileDataViewModel
 }
 
 /// <summary>
-/// Model for move history.
+/// Model for move history - matches the API's MoveHistory DTO.
 /// </summary>
 public class MoveHistoryItem
 {
+    [JsonPropertyName("moveNumber")]
+    public int MoveNumber { get; set; }
+
     [JsonPropertyName("playerId")]
     public string PlayerId { get; set; } = string.Empty;
 
     [JsonPropertyName("playerName")]
     public string PlayerName { get; set; } = string.Empty;
 
-    [JsonPropertyName("word")]
-    public string Word { get; set; } = string.Empty;
+    [JsonPropertyName("actionType")]
+    public string ActionType { get; set; } = string.Empty;
 
-    [JsonPropertyName("points")]
-    public int Points { get; set; }
+    [JsonPropertyName("word")]
+    public string? Word { get; set; }
+
+    [JsonPropertyName("score")]
+    public int Score { get; set; }
+
+    [JsonPropertyName("tiles")]
+    public List<MoveTileDto>? Tiles { get; set; }
+
+    [JsonPropertyName("timestamp")]
+    public DateTime Timestamp { get; set; }
+}
+
+/// <summary>
+/// Model for a tile in a move history entry.
+/// </summary>
+public class MoveTileDto
+{
+    [JsonPropertyName("tileId")]
+    public string TileId { get; set; } = string.Empty;
+
+    [JsonPropertyName("letter")]
+    public string Letter { get; set; } = string.Empty;
 
     [JsonPropertyName("row")]
     public int Row { get; set; }
 
     [JsonPropertyName("column")]
     public int Column { get; set; }
-
-    [JsonPropertyName("isHorizontal")]
-    public bool IsHorizontal { get; set; }
 }
