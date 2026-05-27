@@ -9,6 +9,7 @@ namespace Wordfeud.Api.Services;
 public class DutchDictionaryService : IDutchDictionaryService
 {
     private readonly HashSet<string> _words = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _wordList = new();
     private readonly ILogger<DutchDictionaryService> _logger;
     private bool _isInitialized;
     private static readonly HashSet<string> _fallbackWords = new(StringComparer.OrdinalIgnoreCase)
@@ -117,7 +118,9 @@ public class DutchDictionaryService : IDutchDictionaryService
         {
             foreach (var word in embeddedWords)
             {
-                _words.Add(NormalizeDiacritics(word).ToUpperInvariant());
+                var normalized = NormalizeDiacritics(word).ToUpperInvariant();
+                _words.Add(normalized);
+                _wordList.Add(normalized);
             }
             _isInitialized = true;
             _logger.LogInformation("Loaded {Count} words from embedded resource", _words.Count);
@@ -127,6 +130,15 @@ public class DutchDictionaryService : IDutchDictionaryService
         _logger.LogError("Failed to load embedded Dutch dictionary. Falling back to limited word validation.");
         _isInitialized = true;
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<string> GetWords(int skip, int take)
+    {
+        if (!_isInitialized)
+            return Enumerable.Empty<string>();
+
+        return _wordList.Skip(skip).Take(take);
     }
 
     private IEnumerable<string> LoadFromEmbeddedResource()
