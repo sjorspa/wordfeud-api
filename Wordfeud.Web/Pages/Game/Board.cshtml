@@ -170,6 +170,14 @@
                                             {
                                                 <span class="drop-shadow-sm leading-none">@icon</span>
                                             }
+                                            @if (!string.IsNullOrEmpty(bonus))
+                                            {
+                                                var arrows = GetBonusArrows(row, col, bonus);
+                                                foreach (var arrow in arrows)
+                                                {
+                                                    <span class="bonus-arrow @arrow"></span>
+                                                }
+                                            }
                                         </div>
                                     }
                                 }
@@ -344,5 +352,24 @@
         if (dw.Any(x => x.Item1 == row && x.Item2 == col)) return "DW";
         if (tw.Any(x => x.Item1 == row && x.Item2 == col)) return "TW";
         return "";
+    }
+
+    public static string[] GetBonusArrows(int row, int col, string bonusType)
+    {
+        if (string.IsNullOrEmpty(bonusType)) return Array.Empty<string>();
+
+        var arrows = new List<string>();
+
+        // Check each direction for adjacent squares of the same bonus type
+        // Up
+        if (row > 0 && GetBonusType(row - 1, col) == bonusType) arrows.Add("arrow-up");
+        // Down
+        if (row < 14 && GetBonusType(row + 1, col) == bonusType) arrows.Add("arrow-down");
+        // Left
+        if (col > 0 && GetBonusType(row, col - 1) == bonusType) arrows.Add("arrow-left");
+        // Right
+        if (col < 14 && GetBonusType(row, col + 1) == bonusType) arrows.Add("arrow-right");
+
+        return arrows.ToArray();
     }
 }

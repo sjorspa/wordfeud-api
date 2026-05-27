@@ -32,17 +32,60 @@
     <style>
         /* Board bonus square colors */
         .bonus-tws { background-color: #d72421; color: #f8bdb4; }
-        .bonus-dws { background-color: #b86e74; color: white; }
-        .bonus-dls { background-color: #5d94c5; color: white; }
+        .bonus-dws { background-color: #ffbead; color: #b86e74; }
+        .bonus-dls { background-color: #6fe6f6; color: #5d94c5; }
         .bonus-tls { background-color: #4695ca; color: #c3f5f7; }
-        .bonus-star { background-color: #d72421; color: #f8bdb4; }
+        .bonus-star { background-color: #ffbead; color: #b86e74; }
 
         /* Colorblind mode bonus square colors - uses patterns in addition to colors */
         .colorblind-mode .bonus-tws { background-color: #d72421; color: #f8bdb4; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-dws { background-color: #b86e74; color: white; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-dls { background-color: #5d94c5; color: white; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-dws { background-color: #ffbead; color: #b86e74; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-dls { background-color: #6fe6f6; color: #5d94c5; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
         .colorblind-mode .bonus-tls { background-color: #4695ca; color: #c3f5f7; background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
-        .colorblind-mode .bonus-star { background-color: #d72421; color: #f8bdb4; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+        .colorblind-mode .bonus-star { background-color: #ffbead; color: #b86e74; background-image: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255,255,255,0.3) 3px, rgba(255,255,255,0.3) 6px); }
+
+        /* Arrow indicators on bonus squares - point to adjacent squares of same type */
+        .bonus-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+        .bonus-arrow.arrow-right {
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 5px solid;
+            float: right;
+            margin-top: 10px;
+            margin-right: -5px;
+        }
+        .bonus-arrow.arrow-left {
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-right: 5px solid;
+            float: left;
+            margin-top: 10px;
+            margin-left: -5px;
+        }
+        .bonus-arrow.arrow-down {
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid;
+            margin-top: 4px;
+            margin-left: 10px;
+        }
+        .bonus-arrow.arrow-up {
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 5px solid;
+            margin-top: -10px;
+            margin-left: 10px;
+        }
+        .bonus-tws .bonus-arrow { border-color: #d72421; }
+        .bonus-dws .bonus-arrow { border-color: #ffbead; }
+        .bonus-dls .bonus-arrow { border-color: #6fe6f6; }
+        .bonus-tls .bonus-arrow { border-color: #4695ca; }
+        .bonus-star .bonus-arrow { border-color: #ffbead; }
 
         /* Tile styles */
         .tile {
