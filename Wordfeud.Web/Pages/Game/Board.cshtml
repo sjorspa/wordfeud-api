@@ -163,7 +163,9 @@
                                              data-row="@row" data-col="@col"
                                              ondragover="event.preventDefault(); this.classList.add('drop-hover')"
                                              ondragleave="this.classList.remove('drop-hover')"
-                                             ondrop="handleDrop(event, @row, @col)">
+                                             ondrop="handleDrop(event, @row, @col)"
+                                             ondragenter="handleDragEnter(@row, @col)"
+                                             ondragleave="handleDragLeave()">
                                             @if (!string.IsNullOrEmpty(icon))
                                             {
                                                 <span class="drop-shadow-sm leading-none">@icon</span>

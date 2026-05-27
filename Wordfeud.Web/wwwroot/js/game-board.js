@@ -327,6 +327,111 @@ function handleDragStart(event, tileId) {
     }
 }
 
+// Track hover position for scoring preview
+let hoveredCell = null;
+let scoringPreviewEl = null;
+
+function getBoardCell(row, col) {
+    return document.querySelector(`.board-cell[data-row="${row}"][data-col="${col}"]`);
+}
+
+function getScoringPreview() {
+    if (!scoringPreviewEl) {
+        scoringPreviewEl = document.createElement('div');
+        scoringPreviewEl.className = 'scoring-preview';
+        scoringPreviewEl.style.display = 'none';
+        document.body.appendChild(scoringPreviewEl);
+    }
+    return scoringPreviewEl;
+}
+
+function showScoringPreview(row, col, score) {
+    const preview = getScoringPreview();
+    const cell = getBoardCell(row, col);
+    if (!cell) return;
+
+    const rect = cell.getBoundingClientRect();
+    preview.textContent = `Score: ${score}`;
+    preview.style.display = 'block';
+    preview.style.top = `${rect.top - 45}px`;
+    preview.style.left = `${rect.left + rect.width / 2}px`;
+    preview.classList.add('visible');
+}
+
+function hideScoringPreview() {
+    const preview = getScoringPreview();
+    if (preview) {
+        preview.classList.remove('visible');
+    }
+}
+
+// Bonus square multiplier lookup
+const BONUS_MULTIPLIERS = {
+    'TW': { type: 'word', multiplier: 3 },
+    'DW': { type: 'word', multiplier: 2 },
+    'TL': { type: 'letter', multiplier: 3 },
+    'DL': { type: 'letter', multiplier: 2 },
+    'STAR': { type: 'word', multiplier: 1 }
+};
+
+function getCellBonus(row, col) {
+    // Double Word
+    const dw = [[1,1],[2,2],[3,3],[4,4],[1,13],[2,12],[3,11],[4,10],[10,4],[11,3],[12,2],[13,1],[10,10],[11,11],[12,12],[13,13]];
+    if (dw.some(p => p[0] === row && p[1] === col)) return 'DW';
+
+    // Triple Word
+    const tw = [[0,0],[0,7],[0,14],[7,0],[7,14],[14,0],[14,7],[14,14]];
+    if (tw.some(p => p[0] === row && p[1] === col)) return 'TW';
+
+    // Triple Letter
+    const tl = [[1,5],[1,9],[5,1],[5,5],[5,9],[5,13],[9,1],[9,5],[9,9],[9,13],[13,5],[13,9]];
+    if (tl.some(p => p[0] === row && p[1] === col)) return 'TL';
+
+    // Double Letter
+    const dl = [[0,3],[0,11],[2,6],[2,8],[3,0],[3,7],[3,14],[6,2],[6,6],[6,8],[6,12],[7,3],[7,11],[8,2],[8,6],[8,8],[8,12],[11,0],[11,7],[11,14],[12,6],[12,8],[14,3],[14,11]];
+    if (dl.some(p => p[0] === row && p[1] === col)) return 'DL';
+
+    // Star (center)
+    if (row === 7 && col === 7) return 'STAR';
+
+    return '';
+}
+
+// Calculate estimated score for a single tile on a cell
+function calculateTileScore(tile, row, col) {
+    if (!tile) return 0;
+
+    let baseScore = tile.points || 0;
+    const bonus = getCellBonus(row, col);
+    const bonusInfo = BONUS_MULTIPLIERS[bonus];
+
+    if (!bonusInfo) return baseScore;
+
+    if (bonusInfo.type === 'letter') {
+        return baseScore * bonusInfo.multiplier;
+    } else {
+        // Word bonus - only show base score since word bonuses depend on full word
+        return baseScore;
+    }
+}
+
+function handleDragEnter(row, col) {
+    if (!GameState.draggedTileId) return;
+
+    const hand = getCurrentHand();
+    const tile = hand.find(t => t.id === GameState.draggedTileId);
+    if (!tile) return;
+
+    const score = calculateTileScore(tile, row, col);
+    showScoringPreview(row, col, score);
+    hoveredCell = { row, col };
+}
+
+function handleDragLeave() {
+    hideScoringPreview();
+    hoveredCell = null;
+}
+
 function handleDrop(event, row, col) {
     event.preventDefault();
     event.stopPropagation();
