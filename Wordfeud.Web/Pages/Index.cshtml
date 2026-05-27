@@ -789,7 +789,9 @@
                                     }
                                     @if (boardTile != null)
                                     {
-                                        <div class="tile-on-board">
+                                        <div class="tile-on-board"
+                                             ondragover="event.preventDefault();"
+                                             ondrop="event.preventDefault(); handleDrop(event, @row, @col);">
                                             @(boardTile.IsBlank ? (boardTile.BlankRepresentation ?? "?") : boardTile.Letter)
                                             <span class="points">@boardTile.Points</span>
                                         </div>
