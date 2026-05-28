@@ -697,17 +697,17 @@ public class GameService : IGameService
 
     /// <summary>
     /// Gets all words formed by a placement, including cross words.
-    /// The main word is built by scanning the full line (including existing tiles that fill gaps)
-    /// so placements that connect through existing tiles produce the correct word.
+    /// The main word is built from the request tile letters (not the board) so it works
+    /// both during validation (before placement) and scoring (after placement).
     /// </summary>
     private List<(string Word, bool IsCrossWord)> GetFormedWords(Game game, PlaceTilesRequest request, int direction)
     {
         var words = new List<(string Word, bool IsCrossWord)>();
 
-        // Build the main word by scanning the full line (including existing tiles)
+        // Build the main word from request tile letters directly
         var mainWord = direction == 0
-            ? BuildFullLineWord(game, request.Tiles, fixedCoord: request.Tiles[0].Row, vertical: false, request.BlankAssignments)
-            : BuildFullLineWord(game, request.Tiles, fixedCoord: request.Tiles[0].Column, vertical: true, request.BlankAssignments);
+            ? BuildStringFromTiles(request.Tiles.OrderBy(t => t.Column).ToList(), request.BlankAssignments)
+            : BuildStringFromTiles(request.Tiles.OrderBy(t => t.Row).ToList(), request.BlankAssignments);
 
         if (mainWord.Length >= 2)
             words.Add((mainWord, false));
@@ -771,75 +771,21 @@ public class GameService : IGameService
     }
 
     /// <summary>
-    /// Builds the full word for a placement line, including existing tiles that fill gaps
-    /// between newly placed tiles.
+    /// Builds a word string from a list of tiles, using their letters or blank representations
+    /// from the request's BlankAssignments dictionary.
     /// </summary>
-    private static string BuildFullLineWord(
-        Game game,
-        List<TilePlacementDto> tiles,
-        int row,
-        bool vertical,
-        IDictionary<string, string>? blankAssignments)
+    private static string BuildStringFromTiles(List<TilePlacementDto> tiles, IDictionary<string, string>? blankAssignments)
     {
-        // Find the min and max positions covered by the placed tiles
-        var minPos = tiles.Min(t => vertical ? t.Row : t.Column);
-        var maxPos = tiles.Max(t => vertical ? t.Row : t.Column);
-
-        // Extend left/up to find the true start
-        var start = minPos;
-        while (start > 0)
-        {
-            var r = vertical ? row : start - 1;
-            var c = vertical ? start - 1 : row;
-            if (vertical)
-            {
-                if (game.Board[start - 1, row] == null) break;
-            }
-            else
-            {
-                if (game.Board[row, start - 1] == null) break;
-            }
-            start--;
-        }
-
-        // Extend right/down to find the true end
-        var end = maxPos;
-        var boardSize = BoardConfiguration.BoardSize;
-        while (end < boardSize - 1)
-        {
-            if (vertical)
-            {
-                if (game.Board[end + 1, row] == null) break;
-            }
-            else
-            {
-                if (game.Board[row, end + 1] == null) break;
-            }
-            end++;
-        }
-
-        // Build the word from start to end
         var sb = new StringBuilder();
-        for (var pos = start; pos <= end; pos++)
+        foreach (var tile in tiles)
         {
-            var tile = vertical ? game.Board[pos, row] : game.Board[row, pos];
-            if (tile != null)
+            var letter = tile.Letter ?? string.Empty;
+            if (blankAssignments != null && blankAssignments.ContainsKey(tile.TileId))
             {
-                sb.Append(tile.BlankRepresentation ?? tile.Letter);
+                letter = blankAssignments[tile.TileId];
             }
-            else
-            {
-                // Gap position — find the corresponding placed tile and use its letter
-                var placedTile = tiles.First(t => vertical ? t.Row == pos : t.Column == pos);
-                var letter = placedTile.Letter ?? string.Empty;
-                if (blankAssignments != null && blankAssignments.ContainsKey(placedTile.TileId))
-                {
-                    letter = blankAssignments[placedTile.TileId];
-                }
-                sb.Append(letter);
-            }
+            sb.Append(letter);
         }
-
         return sb.ToString();
     }
 
