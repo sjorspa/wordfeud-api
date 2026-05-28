@@ -2,6 +2,8 @@ using Wordfeud.Api.Interfaces;
 using Wordfeud.Api.Services;
 using Wordfeud.Api.Models;
 using Wordfeud.Api.Serialization;
+using Wordfeud.Api.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -39,11 +41,18 @@ public sealed class Program
             c.EnableAnnotations();
         });
 
+        // Configure SQLite database for game persistence
+        builder.Services.AddDbContext<GameDbContext>(options =>
+            options.UseSqlite("Data Source=wordfeud.db"));
+
         // Register Dutch dictionary service
         builder.Services.AddSingleton<IDutchDictionaryService, DutchDictionaryService>();
 
+        // Register game repository
+        builder.Services.AddScoped<IGameRepository, GameRepository>();
+
         // Register game service
-        builder.Services.AddSingleton<IGameService, GameService>();
+        builder.Services.AddScoped<IGameService, GameService>();
 
         // Configure logging
         builder.Services.AddLogging(loggingBuilder =>

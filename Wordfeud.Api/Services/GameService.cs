@@ -11,22 +11,22 @@ namespace Wordfeud.Api.Services;
 /// </summary>
 public class GameService : IGameService
 {
-    private readonly Dictionary<string, Game> _games = new(StringComparer.OrdinalIgnoreCase);
+    private readonly IGameRepository _gameRepository;
     private readonly IDutchDictionaryService _dictionaryService;
     private readonly ILogger<GameService> _logger;
-    private readonly object _lock = new();
 
     /// <summary>
     /// Creates a new GameService.
     /// </summary>
-    public GameService(IDutchDictionaryService dictionaryService, ILogger<GameService> logger)
+    public GameService(IGameRepository gameRepository, IDutchDictionaryService dictionaryService, ILogger<GameService> logger)
     {
+        _gameRepository = gameRepository;
         _dictionaryService = dictionaryService;
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public Task<Game> CreateGameAsync(string playerName)
+    public async Task<Game> CreateGameAsync(string playerName)
     {
         _logger.LogInformation("Creating new game with player '{PlayerName}'", playerName);
 
@@ -54,13 +54,12 @@ public class GameService : IGameService
         // Set the creator as the first player (current player)
         game.CurrentPlayerId = game.Players[0].Id;
 
-        lock (_lock)
-        {
-            _games[game.Id] = game;
-        }
+        // Persist to database
+        var entity = GameEntity.FromGame(game);
+        await _gameRepository.CreateAsync(entity);
 
         _logger.LogInformation("Game {GameId} created with player '{PlayerName}'", game.Id, playerName);
-        return Task.FromResult(game);
+        return game;
     }
 
     /// <inheritdoc />
@@ -68,217 +67,218 @@ public class GameService : IGameService
     {
         _logger.LogInformation("Player '{PlayerName}' joining game {GameId}", playerName, gameId);
 
-        Game? game;
-        lock (_lock)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
         {
-            if (!_games.TryGetValue(gameId, out game))
-            {
-                throw new KeyNotFoundException($"Game '{gameId}' not found.");
-            }
-
-            if (game.Status != GameStatus.Waiting)
-            {
-                throw new InvalidOperationException("Game has already started and cannot accept new players.");
-            }
-
-            if (game.Players.Count >= 2)
-            {
-                throw new InvalidOperationException("Game is full (max 2 players).");
-            }
-
-            var secondPlayer = new Player
-            {
-                Name = playerName,
-                Hand = new List<Tile>(),
-                Score = 0
-            };
-
-            game.Players.Add(secondPlayer);
-            game.Status = GameStatus.InProgress;
-            game.CurrentPlayerId = game.Players[0].Id;
-            game.Players[1].Hand = DrawTiles(game, 7);
-            game.Players[1].TilesDrawn = 7;
+            throw new KeyNotFoundException($"Game '{gameId}' not found.");
         }
+
+        var game = entity.ToGame();
+
+        if (game.Status != GameStatus.Waiting)
+        {
+            throw new InvalidOperationException("Game has already started and cannot accept new players.");
+        }
+
+        if (game.Players.Count >= 2)
+        {
+            throw new InvalidOperationException("Game is full (max 2 players).");
+        }
+
+        var secondPlayer = new Player
+        {
+            Name = playerName,
+            Hand = new List<Tile>(),
+            Score = 0
+        };
+
+        game.Players.Add(secondPlayer);
+        game.Status = GameStatus.InProgress;
+        game.CurrentPlayerId = game.Players[0].Id;
+        game.Players[1].Hand = DrawTiles(game, 7);
+        game.Players[1].TilesDrawn = 7;
+        game.UpdatedAt = DateTime.UtcNow;
+
+        // Persist to database
+        entity = GameEntity.FromGame(game);
+        await _gameRepository.UpdateAsync(entity);
 
         _logger.LogInformation("Player '{PlayerName}' joined game {GameId}", playerName, gameId);
-        return await Task.FromResult(game);
+        return game;
     }
 
     /// <inheritdoc />
-    public Task<Game?> GetGameAsync(string gameId)
+    public async Task<Game?> GetGameAsync(string gameId)
     {
-        Game? game;
-        lock (_lock)
-        {
-            _games.TryGetValue(gameId, out game);
-        }
+        var entity = await _gameRepository.GetByIdAsync(gameId);
 
-        if (game == null)
+        if (entity == null)
         {
             _logger.LogWarning("Game {GameId} not found", gameId);
+            return null;
         }
 
-        return Task.FromResult(game);
+        var game = entity.ToGame();
+        return game;
     }
 
     /// <inheritdoc />
-#pragma warning disable CS1998 // Async method lacks 'await' operators
     public async Task<Game> PlaceTilesAsync(string gameId, string playerId, PlaceTilesRequest request)
     {
         _logger.LogInformation("Player {PlayerId} placing {TileCount} tiles in game {GameId}",
             playerId, request.Tiles?.Count ?? 0, gameId);
 
-        Game? game;
-        lock (_lock)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
+            throw new KeyNotFoundException($"Game '{gameId}' not found.");
+
+        var game = entity.ToGame();
+
+        if (game.Status == GameStatus.Finished)
+            throw new InvalidOperationException("Game is already finished.");
+
+        if (game.CurrentPlayerId != playerId)
+            throw new UnauthorizedAccessException("It is not your turn.");
+
+        if (request.Tiles == null || request.Tiles.Count == 0)
+            throw new ArgumentException("At least one tile must be placed.");
+
+        // Validate board bounds
+        foreach (var tileDto in request.Tiles)
         {
-            if (!_games.TryGetValue(gameId, out game))
-                throw new KeyNotFoundException($"Game '{gameId}' not found.");
-
-            if (game!.Status == GameStatus.Finished)
-                throw new InvalidOperationException("Game is already finished.");
-
-            if (game.CurrentPlayerId != playerId)
-                throw new UnauthorizedAccessException("It is not your turn.");
-
-            if (request.Tiles == null || request.Tiles.Count == 0)
-                throw new ArgumentException("At least one tile must be placed.");
-
-            // Validate board bounds
-            foreach (var tileDto in request.Tiles)
+            if (tileDto.Row < 0 || tileDto.Row >= BoardConfiguration.BoardSize ||
+                tileDto.Column < 0 || tileDto.Column >= BoardConfiguration.BoardSize)
             {
-                if (tileDto.Row < 0 || tileDto.Row >= BoardConfiguration.BoardSize ||
-                    tileDto.Column < 0 || tileDto.Column >= BoardConfiguration.BoardSize)
-                {
-                    throw new ArgumentException($"Position ({tileDto.Row}, {tileDto.Column}) is out of bounds.");
-                }
+                throw new ArgumentException($"Position ({tileDto.Row}, {tileDto.Column}) is out of bounds.");
             }
-
-            // Check that all positions are empty
-            foreach (var tileDto in request.Tiles)
-            {
-                if (game.Board[tileDto.Row, tileDto.Column] != null)
-                    throw new InvalidOperationException($"Position ({tileDto.Row}, {tileDto.Column}) is already occupied.");
-            }
-
-            // Verify tiles are in the player's hand
-            var player = game.Players.First(p => p.Id == playerId);
-            var missingTiles = request.Tiles
-                .Where(dto => !player.Hand.Any(t => t.Id == dto.TileId))
-                .ToList();
-
-            if (missingTiles.Any())
-                throw new ArgumentException("One or more tiles are not in your hand.");
-
-            // Validate blank assignments
-            foreach (var tileDto in request.Tiles.Where(t => t.IsBlank))
-            {
-                if (string.IsNullOrEmpty(tileDto.Letter) || tileDto.Letter.Length != 1 || !char.IsLetter(tileDto.Letter[0]))
-                    throw new ArgumentException("Blank tile must have a single letter assigned.");
-            }
-
-            // Validate BlankAssignments dictionary keys match tile IDs
-            if (request.BlankAssignments != null)
-            {
-                var tileIds = request.Tiles.Where(t => t.IsBlank).Select(t => t.TileId).ToHashSet();
-                foreach (var kvp in request.BlankAssignments)
-                {
-                    if (!tileIds.Contains(kvp.Key))
-                        throw new ArgumentException($"Blank assignment key '{kvp.Key}' does not match any placed tile.");
-                    if (kvp.Value.Length != 1 || !char.IsLetter(kvp.Value[0]))
-                        throw new ArgumentException($"Blank assignment for tile '{kvp.Key}' must be a single letter.");
-                }
-            }
-
-            // Apply blank assignments to the tiles in hand
-            if (request.BlankAssignments != null)
-            {
-                foreach (var kvp in request.BlankAssignments)
-                {
-                    var handTile = player.Hand.FirstOrDefault(t => t.Id == kvp.Key);
-                    if (handTile != null && handTile.IsBlank)
-                    {
-                        handTile.BlankRepresentation = kvp.Value.ToUpperInvariant();
-                        handTile.Letter = kvp.Value.ToUpperInvariant();
-                    }
-                }
-            }
-
-            // Validate the placement
-            var validationResult = ValidatePlacement(game, player, request);
-            if (!validationResult.IsValid)
-                throw new ArgumentException(validationResult.ErrorMessage);
-
-            // Place the tiles
-            foreach (var tileDto in request.Tiles)
-            {
-                var handTile = player.Hand.First(t => t.Id == tileDto.TileId);
-                game.Board[tileDto.Row, tileDto.Column] = handTile;
-                player.Hand.Remove(handTile);
-            }
-
-            // Calculate score
-            var direction = DeriveDirection(request.Tiles);
-            var scoreResult = CalculateScore(game, request, direction);
-            player.Score += scoreResult.TotalScore;
-
-            // Draw new tiles
-            var tilesDrawn = Math.Min(7 - player.Hand.Count, game.TileBag.Count);
-            if (tilesDrawn > 0)
-            {
-                var newTiles = DrawTiles(game, tilesDrawn);
-                player.Hand.AddRange(newTiles);
-                player.TilesDrawn += tilesDrawn;
-            }
-
-            // Track formed words
-            game.FormedWords.AddRange(scoreResult.FormedWords);
-
-            // Update consecutive passes
-            game.ConsecutivePasses = 0;
-            game.MoveNumber++;
-            game.CurrentPlayerId = GetNextPlayerId(game, playerId);
-            game.UpdatedAt = DateTime.UtcNow;
-
-            // Check for game end conditions
-            CheckGameEnd(game);
-
-            // Record move history
-            game.MoveHistory.Add(new MoveHistory
-            {
-                MoveNumber = game.MoveNumber,
-                PlayerId = playerId,
-                PlayerName = player.Name,
-                ActionType = "place",
-                Word = scoreResult.FormedWords.Count > 0 ? string.Join(", ", scoreResult.FormedWords) : null,
-                Score = scoreResult.TotalScore,
-                Tiles = request.Tiles.Select(t => new MoveTileDto
-                {
-                    TileId = t.TileId,
-                    Letter = t.Letter,
-                    Row = t.Row,
-                    Column = t.Column
-                }).ToList(),
-                Timestamp = DateTime.UtcNow
-            });
-
-            _logger.LogInformation("Player {PlayerId} scored {Score} points in game {GameId}",
-                playerId, scoreResult.TotalScore, gameId);
         }
+
+        // Check that all positions are empty
+        foreach (var tileDto in request.Tiles)
+        {
+            if (game.Board[tileDto.Row, tileDto.Column] != null)
+                throw new InvalidOperationException($"Position ({tileDto.Row}, {tileDto.Column}) is already occupied.");
+        }
+
+        // Verify tiles are in the player's hand
+        var player = game.Players.First(p => p.Id == playerId);
+        var missingTiles = request.Tiles
+            .Where(dto => !player.Hand.Any(t => t.Id == dto.TileId))
+            .ToList();
+
+        if (missingTiles.Any())
+            throw new ArgumentException("One or more tiles are not in your hand.");
+
+        // Validate blank assignments
+        foreach (var tileDto in request.Tiles.Where(t => t.IsBlank))
+        {
+            if (string.IsNullOrEmpty(tileDto.Letter) || tileDto.Letter.Length != 1 || !char.IsLetter(tileDto.Letter[0]))
+                throw new ArgumentException("Blank tile must have a single letter assigned.");
+        }
+
+        // Validate BlankAssignments dictionary keys match tile IDs
+        if (request.BlankAssignments != null)
+        {
+            var tileIds = request.Tiles.Where(t => t.IsBlank).Select(t => t.TileId).ToHashSet();
+            foreach (var kvp in request.BlankAssignments)
+            {
+                if (!tileIds.Contains(kvp.Key))
+                    throw new ArgumentException($"Blank assignment key '{kvp.Key}' does not match any placed tile.");
+                if (kvp.Value.Length != 1 || !char.IsLetter(kvp.Value[0]))
+                    throw new ArgumentException($"Blank assignment for tile '{kvp.Key}' must be a single letter.");
+            }
+        }
+
+        // Apply blank assignments to the tiles in hand
+        if (request.BlankAssignments != null)
+        {
+            foreach (var kvp in request.BlankAssignments)
+            {
+                var handTile = player.Hand.FirstOrDefault(t => t.Id == kvp.Key);
+                if (handTile != null && handTile.IsBlank)
+                {
+                    handTile.BlankRepresentation = kvp.Value.ToUpperInvariant();
+                    handTile.Letter = kvp.Value.ToUpperInvariant();
+                }
+            }
+        }
+
+        // Validate the placement
+        var validationResult = ValidatePlacement(game, player, request);
+        if (!validationResult.IsValid)
+            throw new ArgumentException(validationResult.ErrorMessage);
+
+        // Place the tiles
+        foreach (var tileDto in request.Tiles)
+        {
+            var handTile = player.Hand.First(t => t.Id == tileDto.TileId);
+            game.Board[tileDto.Row, tileDto.Column] = handTile;
+            player.Hand.Remove(handTile);
+        }
+
+        // Calculate score
+        var direction = DeriveDirection(request.Tiles);
+        var scoreResult = CalculateScore(game, request, direction);
+        player.Score += scoreResult.TotalScore;
+
+        // Draw new tiles
+        var tilesDrawn = Math.Min(7 - player.Hand.Count, game.TileBag.Count);
+        if (tilesDrawn > 0)
+        {
+            var newTiles = DrawTiles(game, tilesDrawn);
+            player.Hand.AddRange(newTiles);
+            player.TilesDrawn += tilesDrawn;
+        }
+
+        // Track formed words
+        game.FormedWords.AddRange(scoreResult.FormedWords);
+
+        // Update consecutive passes
+        game.ConsecutivePasses = 0;
+        game.MoveNumber++;
+        game.CurrentPlayerId = GetNextPlayerId(game, playerId);
+        game.UpdatedAt = DateTime.UtcNow;
+
+        // Check for game end conditions
+        CheckGameEnd(game);
+
+        // Record move history
+        game.MoveHistory.Add(new MoveHistory
+        {
+            MoveNumber = game.MoveNumber,
+            PlayerId = playerId,
+            PlayerName = player.Name,
+            ActionType = "place",
+            Word = scoreResult.FormedWords.Count > 0 ? string.Join(", ", scoreResult.FormedWords) : null,
+            Score = scoreResult.TotalScore,
+            Tiles = request.Tiles.Select(t => new MoveTileDto
+            {
+                TileId = t.TileId,
+                Letter = t.Letter,
+                Row = t.Row,
+                Column = t.Column
+            }).ToList(),
+            Timestamp = DateTime.UtcNow
+        });
+
+        // Persist to database
+        entity = GameEntity.FromGame(game);
+        await _gameRepository.UpdateAsync(entity);
+
+        _logger.LogInformation("Player {PlayerId} scored {Score} points in game {GameId}",
+            playerId, scoreResult.TotalScore, gameId);
 
         return game;
     }
 
     /// <inheritdoc />
-    public Task<GameScoresDto> GetScoresAsync(string gameId)
+    public async Task<GameScoresDto> GetScoresAsync(string gameId)
     {
-        Game? game;
-        lock (_lock)
-        {
-            _games.TryGetValue(gameId, out game);
-        }
-
-        if (game == null)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
             throw new KeyNotFoundException($"Game '{gameId}' not found.");
+
+        var game = entity.ToGame();
 
         // Calculate final scores if game is finished
         if (game.Status == GameStatus.Finished)
@@ -299,20 +299,17 @@ public class GameService : IGameService
             }).ToList()
         };
 
-        return Task.FromResult(dto);
+        return dto;
     }
 
     /// <inheritdoc />
-    public Task<BoardStateDto> GetBoardAsync(string gameId)
+    public async Task<BoardStateDto> GetBoardAsync(string gameId)
     {
-        Game? game;
-        lock (_lock)
-        {
-            _games.TryGetValue(gameId, out game);
-        }
-
-        if (game == null)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
             throw new KeyNotFoundException($"Game '{gameId}' not found.");
+
+        var game = entity.ToGame();
 
         var board = game.Board;
         var tiles = new List<BoardTileDto>();
@@ -343,153 +340,155 @@ public class GameService : IGameService
             Tiles = tiles
         };
 
-        return Task.FromResult(dto);
+        return dto;
     }
 
     /// <inheritdoc />
-#pragma warning disable CS1998 // Async method lacks 'await' operators
     public async Task<Game> PassTurnAsync(string gameId, string playerId)
     {
         _logger.LogInformation("Player {PlayerId} passing turn in game {GameId}", playerId, gameId);
 
-        Game? game;
-        lock (_lock)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
+            throw new KeyNotFoundException($"Game '{gameId}' not found.");
+
+        var game = entity.ToGame();
+
+        if (game.Status == GameStatus.Finished)
+            throw new InvalidOperationException("Game is already finished.");
+
+        if (game.CurrentPlayerId != playerId)
+            throw new UnauthorizedAccessException("It is not your turn.");
+
+        game.ConsecutivePasses++;
+        game.MoveNumber++;
+        game.CurrentPlayerId = GetNextPlayerId(game, playerId);
+        game.UpdatedAt = DateTime.UtcNow;
+
+        // Three consecutive passes ends the game
+        if (game.ConsecutivePasses >= 3)
         {
-            if (!_games.TryGetValue(gameId, out game))
-                throw new KeyNotFoundException($"Game '{gameId}' not found.");
-
-            if (game!.Status == GameStatus.Finished)
-                throw new InvalidOperationException("Game is already finished.");
-
-            if (game.CurrentPlayerId != playerId)
-                throw new UnauthorizedAccessException("It is not your turn.");
-
-            game.ConsecutivePasses++;
-            game.MoveNumber++;
-            game.CurrentPlayerId = GetNextPlayerId(game, playerId);
-            game.UpdatedAt = DateTime.UtcNow;
-
-            // Three consecutive passes ends the game
-            if (game.ConsecutivePasses >= 3)
-            {
-                game.Status = GameStatus.Finished;
-                CalculateFinalScores(game);
-                _logger.LogInformation("Game {GameId} ended due to three consecutive passes", gameId);
-            }
-
-            // Record move history
-            var passingPlayer = game.Players.First(p => p.Id == playerId);
-            game.MoveHistory.Add(new MoveHistory
-            {
-                MoveNumber = game.MoveNumber,
-                PlayerId = playerId,
-                PlayerName = passingPlayer.Name,
-                ActionType = "pass",
-                Score = 0,
-                Timestamp = DateTime.UtcNow
-            });
+            game.Status = GameStatus.Finished;
+            CalculateFinalScores(game);
+            _logger.LogInformation("Game {GameId} ended due to three consecutive passes", gameId);
         }
+
+        // Record move history
+        var passingPlayer = game.Players.First(p => p.Id == playerId);
+        game.MoveHistory.Add(new MoveHistory
+        {
+            MoveNumber = game.MoveNumber,
+            PlayerId = playerId,
+            PlayerName = passingPlayer.Name,
+            ActionType = "pass",
+            Score = 0,
+            Timestamp = DateTime.UtcNow
+        });
+
+        // Persist to database
+        entity = GameEntity.FromGame(game);
+        await _gameRepository.UpdateAsync(entity);
 
         return game;
     }
-#pragma warning restore CS1998 // Async method lacks 'await' operators
 
     /// <inheritdoc />
-#pragma warning disable CS1998 // Async method lacks 'await' operators
     public async Task<Game> SwapTilesAsync(string gameId, string playerId, SwapTilesRequest request)
     {
         _logger.LogInformation("Player {PlayerId} swapping {TileCount} tiles in game {GameId}",
             playerId, request.TileIds?.Count ?? 0, gameId);
 
-        Game? game;
-        lock (_lock)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
+            throw new KeyNotFoundException($"Game '{gameId}' not found.");
+
+        var game = entity.ToGame();
+
+        if (game.Status == GameStatus.Finished)
+            throw new InvalidOperationException("Game is already finished.");
+
+        if (game.CurrentPlayerId != playerId)
+            throw new UnauthorizedAccessException("It is not your turn.");
+
+        var player = game.Players.First(p => p.Id == playerId);
+
+        var tilesToSwap = request.TileIds!.Count;
+
+        // Check if player has enough tiles to swap
+        if (player.Hand.Count < tilesToSwap)
+            throw new InvalidOperationException(
+                $"Player has only {player.Hand.Count} tiles but wants to swap {tilesToSwap}.");
+
+        // Check if at least 7 tiles remain in the bag (Wordfeud rule)
+        if (game.TileBag.Count < 7)
+            throw new InvalidOperationException(
+                $"Cannot swap tiles. At least 7 tiles must remain in the bag. Available: {game.TileBag.Count}");
+
+        // Validate all tile IDs are in the player's hand
+        var missingTiles = new List<string>();
+        foreach (var tileId in request.TileIds!)
         {
-            if (!_games.TryGetValue(gameId, out game))
-                throw new KeyNotFoundException($"Game '{gameId}' not found.");
-
-            if (game!.Status == GameStatus.Finished)
-                throw new InvalidOperationException("Game is already finished.");
-
-            if (game.CurrentPlayerId != playerId)
-                throw new UnauthorizedAccessException("It is not your turn.");
-
-            var player = game.Players.First(p => p.Id == playerId);
-
-            var tilesToSwap = request.TileIds!.Count;
-
-            // Check if player has enough tiles to swap
-            if (player.Hand.Count < tilesToSwap)
-                throw new InvalidOperationException(
-                    $"Player has only {player.Hand.Count} tiles but wants to swap {tilesToSwap}.");
-
-            // Check if at least 7 tiles remain in the bag (Wordfeud rule)
-            if (game.TileBag.Count < 7)
-                throw new InvalidOperationException(
-                    $"Cannot swap tiles. At least 7 tiles must remain in the bag. Available: {game.TileBag.Count}");
-
-            // Validate all tile IDs are in the player's hand
-            var missingTiles = new List<string>();
-            foreach (var tileId in request.TileIds!)
+            if (!player.Hand.Any(t => t.Id == tileId))
             {
-                if (!player.Hand.Any(t => t.Id == tileId))
-                {
-                    missingTiles.Add(tileId);
-                }
+                missingTiles.Add(tileId);
             }
-
-            if (missingTiles.Count > 0)
-            {
-                throw new ArgumentException(
-                    $"The following tiles are not in your hand: {string.Join(", ", missingTiles)}");
-            }
-
-            // Remove tiles from hand and return to bag
-            foreach (var tileId in request.TileIds!)
-            {
-                var tile = player.Hand.First(t => t.Id == tileId);
-                player.Hand.Remove(tile);
-                game.TileBag.Add(tile);
-            }
-
-            // Shuffle the returned tiles back in
-            ShuffleTileBag(game);
-
-            // Draw replacement tiles
-            var tilesDrawn = Math.Min(7 - player.Hand.Count, game.TileBag.Count);
-            if (tilesDrawn > 0)
-            {
-                var newTiles = DrawTiles(game, tilesDrawn);
-                player.Hand.AddRange(newTiles);
-                player.TilesDrawn += tilesDrawn;
-            }
-
-            game.ConsecutivePasses = 0;
-            game.MoveNumber++;
-            game.CurrentPlayerId = GetNextPlayerId(game, playerId);
-            game.UpdatedAt = DateTime.UtcNow;
-
-            // Record move history
-            game.MoveHistory.Add(new MoveHistory
-            {
-                MoveNumber = game.MoveNumber,
-                PlayerId = playerId,
-                PlayerName = player.Name,
-                ActionType = "swap",
-                Score = 0,
-                Tiles = request.TileIds.Select(id => new MoveTileDto
-                {
-                    TileId = id,
-                    Letter = "swap",
-                    Row = 0,
-                    Column = 0
-                }).ToList(),
-                Timestamp = DateTime.UtcNow
-            });
         }
+
+        if (missingTiles.Count > 0)
+        {
+            throw new ArgumentException(
+                $"The following tiles are not in your hand: {string.Join(", ", missingTiles)}");
+        }
+
+        // Remove tiles from hand and return to bag
+        foreach (var tileId in request.TileIds!)
+        {
+            var tile = player.Hand.First(t => t.Id == tileId);
+            player.Hand.Remove(tile);
+            game.TileBag.Add(tile);
+        }
+
+        // Shuffle the returned tiles back in
+        ShuffleTileBag(game);
+
+        // Draw replacement tiles
+        var tilesDrawn = Math.Min(7 - player.Hand.Count, game.TileBag.Count);
+        if (tilesDrawn > 0)
+        {
+            var newTiles = DrawTiles(game, tilesDrawn);
+            player.Hand.AddRange(newTiles);
+            player.TilesDrawn += tilesDrawn;
+        }
+
+        game.ConsecutivePasses = 0;
+        game.MoveNumber++;
+        game.CurrentPlayerId = GetNextPlayerId(game, playerId);
+        game.UpdatedAt = DateTime.UtcNow;
+
+        // Record move history
+        game.MoveHistory.Add(new MoveHistory
+        {
+            MoveNumber = game.MoveNumber,
+            PlayerId = playerId,
+            PlayerName = player.Name,
+            ActionType = "swap",
+            Score = 0,
+            Tiles = request.TileIds.Select(id => new MoveTileDto
+            {
+                TileId = id,
+                Letter = "swap",
+                Row = 0,
+                Column = 0
+            }).ToList(),
+            Timestamp = DateTime.UtcNow
+        });
+
+        // Persist to database
+        entity = GameEntity.FromGame(game);
+        await _gameRepository.UpdateAsync(entity);
 
         return game;
     }
-#pragma warning restore CS1998 // Async method lacks 'await' operators
 
     #region Private Methods
 
@@ -1051,23 +1050,21 @@ public class GameService : IGameService
     }
 
     /// <inheritdoc />
-    public Task<List<MoveHistory>> GetMoveHistoryAsync(string gameId)
+    public async Task<List<MoveHistory>> GetMoveHistoryAsync(string gameId)
     {
         _logger.LogInformation("Getting move history for game {GameId}", gameId);
 
-        Game? game;
-        lock (_lock)
+        var entity = await _gameRepository.GetByIdAsync(gameId);
+        if (entity == null)
         {
-            if (!_games.TryGetValue(gameId, out game))
-            {
-                throw new KeyNotFoundException($"Game '{gameId}' not found.");
-            }
+            throw new KeyNotFoundException($"Game '{gameId}' not found.");
         }
 
-        var moveHistory = game!.MoveHistory.ToList();
+        var game = entity.ToGame();
+        var moveHistory = game.MoveHistory.ToList();
 
         _logger.LogInformation("Move history retrieved for game {GameId}: {MoveCount} moves", gameId, moveHistory.Count);
-        return Task.FromResult(moveHistory);
+        return moveHistory;
     }
 
     #endregion

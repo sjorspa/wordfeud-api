@@ -14,18 +14,41 @@ namespace Wordfeud.Api.Tests.Services;
 /// </summary>
 public class GameServiceTests
 {
+    private readonly Mock<IGameRepository> _repositoryMock;
     private readonly Mock<IDutchDictionaryService> _dictionaryMock;
     private readonly Mock<ILogger<GameService>> _loggerMock;
     private readonly GameService _service;
+    private GameEntity? _storedEntity;
 
     public GameServiceTests()
     {
+        _repositoryMock = new Mock<IGameRepository>();
         _dictionaryMock = new Mock<IDutchDictionaryService>();
         _loggerMock = new Mock<ILogger<GameService>>();
-        _service = new GameService(_dictionaryMock.Object, _loggerMock.Object);
+        _service = new GameService(_repositoryMock.Object, _dictionaryMock.Object, _loggerMock.Object);
 
         // Default: accept all words
         _dictionaryMock.Setup(s => s.Contains(It.IsAny<string>())).Returns(true);
+
+        // CreateAsync stores the entity so GetByIdAsync can return it
+        _repositoryMock.Setup(r => r.CreateAsync(It.IsAny<GameEntity>()))
+            .Returns((GameEntity entity) =>
+            {
+                _storedEntity = entity;
+                return Task.FromResult(entity);
+            });
+
+        // GetByIdAsync returns the stored entity
+        _repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<string>()))
+            .Returns((string id) => Task.FromResult(_storedEntity));
+
+        // UpdateAsync updates the stored entity
+        _repositoryMock.Setup(r => r.UpdateAsync(It.IsAny<GameEntity>()))
+            .Returns((GameEntity entity) =>
+            {
+                _storedEntity = entity;
+                return Task.FromResult(entity);
+            });
     }
 
     #region CreateGameAsync Tests
@@ -1170,6 +1193,15 @@ public class GameServiceTests
         var tileBagProperty = gameType.GetProperty("TileBag");
         var tileBag = tileBagProperty!.GetValue(game) as List<Tile>;
         tileBag!.Clear();
+
+        // Also update the stored entity's TileBagJson so SwapTilesAsync sees an empty bag
+        var entity = await _repositoryMock.Object.GetByIdAsync(game.Id);
+        if (entity != null)
+        {
+            entity.TileBagJson = "[]";
+            _repositoryMock.Setup(r => r.GetByIdAsync(game.Id)).Returns((string id) =>
+                id == game.Id ? Task.FromResult<GameEntity?>(entity) : Task.FromResult<GameEntity?>(null));
+        }
 
         // Act & Assert: Try to swap all tiles when bag is empty
         var swapRequest = new SwapTilesRequest { PlayerId = playerId, TileIds = player.Hand.Select(t => t.Id).ToList() };
