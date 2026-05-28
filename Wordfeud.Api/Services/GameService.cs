@@ -789,6 +789,8 @@ public class GameService : IGameService
         var start = minPos;
         while (start > 0)
         {
+            var r = vertical ? row : start - 1;
+            var c = vertical ? start - 1 : row;
             if (vertical)
             {
                 if (game.Board[start - 1, row] == null) break;
