@@ -706,8 +706,8 @@ public class GameService : IGameService
 
         // Build the main word by scanning the full line (including existing tiles)
         var mainWord = direction == 0
-            ? BuildFullLineWord(game, request.Tiles, row: request.Tiles[0].Row, vertical: false, request.BlankAssignments)
-            : BuildFullLineWord(game, request.Tiles, row: request.Tiles[0].Column, vertical: true, request.BlankAssignments);
+            ? BuildFullLineWord(game, request.Tiles, fixedCoord: request.Tiles[0].Row, vertical: false, request.BlankAssignments)
+            : BuildFullLineWord(game, request.Tiles, fixedCoord: request.Tiles[0].Column, vertical: true, request.BlankAssignments);
 
         if (mainWord.Length >= 2)
             words.Add((mainWord, false));
